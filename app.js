@@ -127,7 +127,10 @@ async function ensureAuth() {
     toast("Configura Firebase en firebase-config.js antes de usar sixseven.");
     throw new Error("Firebase no está configurado");
   }
-  if (auth.currentUser) return auth.currentUser.uid;
+  if (auth.currentUser) {
+    uid = auth.currentUser.uid;
+    return uid;
+  }
   await signInAnonymously(auth);
   return new Promise(resolve => {
     const unsubscribe = onAuthStateChanged(auth, user => {
@@ -158,33 +161,45 @@ if (!firebaseIsConfigured) {
 }
 
 $("createEvent").addEventListener("click", async () => {
+  const button = $("createEvent");
   const name = cleanName($("eventName").value);
   const reason = $("eventReason").value;
   const durationHours = Number($("eventDuration").value || 24);
   if (!name) return toast("Indica el nombre del evento.");
 
-  await ensureAuth();
-  let code = generateCode();
-  let exists = await get(ref(db, `events/${code}`));
-  while (exists.exists()) {
-    code = generateCode();
-    exists = await get(ref(db, `events/${code}`));
+  try {
+    button.disabled = true;
+    button.textContent = "Creando evento...";
+
+    await ensureAuth();
+    let code = generateCode();
+    let exists = await get(ref(db, `events/${code}`));
+    while (exists.exists()) {
+      code = generateCode();
+      exists = await get(ref(db, `events/${code}`));
+    }
+
+    const expiresAt = Date.now() + durationHours * 60 * 60 * 1000;
+    await set(ref(db, `events/${code}`), {
+      name,
+      reason,
+      creatorUid: uid,
+      createdAt: serverTimestamp(),
+      expiresAt,
+      status: "open"
+    });
+
+    currentEventCode = code;
+    currentParticipantName = "Creador";
+    renderCreatedBox(code, name, reason, expiresAt);
+    openEvent(code);
+  } catch (error) {
+    console.error("Error creando evento:", error);
+    toast("No se pudo crear el evento. Revisa Firebase, Anonymous y las reglas.");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Crear evento y generar código";
   }
-
-  const expiresAt = Date.now() + durationHours * 60 * 60 * 1000;
-  await set(ref(db, `events/${code}`), {
-    name,
-    reason,
-    creatorUid: uid,
-    createdAt: serverTimestamp(),
-    expiresAt,
-    status: "open"
-  });
-
-  currentEventCode = code;
-  currentParticipantName = "Creador";
-  renderCreatedBox(code, name, reason, expiresAt);
-  openEvent(code);
 });
 
 function renderCreatedBox(code, name, reason, expiresAt) {
@@ -201,6 +216,7 @@ function renderCreatedBox(code, name, reason, expiresAt) {
 }
 
 $("joinEvent").addEventListener("click", async () => {
+  const button = $("joinEvent");
   $("joinError").textContent = "";
   const code = cleanCode($("joinCode").value);
   const name = cleanName($("participantName").value);
@@ -211,41 +227,52 @@ $("joinEvent").addEventListener("click", async () => {
     return;
   }
 
-  await ensureAuth();
-  const eventSnap = await get(ref(db, `events/${code}`));
-  if (!eventSnap.exists()) {
-    $("joinError").textContent = "No existe ningún evento con ese código.";
-    return;
+  try {
+    button.disabled = true;
+    button.textContent = "Entrando...";
+
+    await ensureAuth();
+    const eventSnap = await get(ref(db, `events/${code}`));
+    if (!eventSnap.exists()) {
+      $("joinError").textContent = "No existe ningún evento con ese código.";
+      return;
+    }
+
+    const event = eventSnap.val();
+    if (eventIsClosed(event)) {
+      $("joinError").textContent = "Este evento está cerrado o ha caducado.";
+      return;
+    }
+
+    const nameIndexRef = ref(db, `events/${code}/nameIndex/${normalizedName}`);
+    const tx = await runTransaction(nameIndexRef, currentValue => {
+      if (currentValue === null || currentValue === uid) return uid;
+      return;
+    });
+
+    if (!tx.committed || tx.snapshot.val() !== uid) {
+      $("joinError").textContent = "Ese nombre ya está siendo utilizado en este evento.";
+      return;
+    }
+
+    currentEventCode = code;
+    currentParticipantName = name;
+
+    await update(ref(db, `events/${code}/participants/${uid}`), {
+      name,
+      normalizedName,
+      joinedAt: serverTimestamp(),
+      active: true
+    });
+
+    openEvent(code);
+  } catch (error) {
+    console.error("Error entrando al evento:", error);
+    $("joinError").textContent = "No se pudo entrar. Revisa código, Firebase, Anonymous y reglas.";
+  } finally {
+    button.disabled = false;
+    button.textContent = "Entrar al evento";
   }
-
-  const event = eventSnap.val();
-  if (eventIsClosed(event)) {
-    $("joinError").textContent = "Este evento está cerrado o ha caducado.";
-    return;
-  }
-
-  const nameIndexRef = ref(db, `events/${code}/nameIndex/${normalizedName}`);
-  const tx = await runTransaction(nameIndexRef, currentValue => {
-    if (currentValue === null || currentValue === uid) return uid;
-    return;
-  });
-
-  if (!tx.committed || tx.snapshot.val() !== uid) {
-    $("joinError").textContent = "Ese nombre ya está siendo utilizado en este evento.";
-    return;
-  }
-
-  currentEventCode = code;
-  currentParticipantName = name;
-
-  await update(ref(db, `events/${code}/participants/${uid}`), {
-    name,
-    normalizedName,
-    joinedAt: serverTimestamp(),
-    active: true
-  });
-
-  openEvent(code);
 });
 
 $("copyInvite").addEventListener("click", () => {
