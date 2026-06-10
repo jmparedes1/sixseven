@@ -1,0 +1,61 @@
+{
+  "rules": {
+    "events": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && (!data.exists() || data.child('creatorUid').val() == auth.uid)",
+        ".validate": "newData.hasChildren(['name', 'reason', 'creatorUid', 'status', 'expiresAt'])",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "reason": {
+          ".validate": "newData.isString() && newData.val().matches(/^(7 minutos a solas|Un café|Una cena|Una noche)$/)"
+        },
+        "creatorUid": {
+          ".validate": "newData.isString() && (!data.exists() ? newData.val() == auth.uid : newData.val() == data.val())"
+        },
+        "status": {
+          ".validate": "newData.val() == 'open' || newData.val() == 'closed'"
+        },
+        "expiresAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "participants": {
+          "$uid": {
+            ".write": "auth != null && auth.uid == $uid && root.child('events').child($code).child('status').val() == 'open' && root.child('events').child($code).child('expiresAt').val() > now",
+            ".validate": "newData.hasChildren(['name', 'normalizedName']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40 && newData.child('normalizedName').isString() && newData.child('normalizedName').val().length >= 2 && newData.child('normalizedName').val().length <= 48"
+          }
+        },
+        "nameIndex": {
+          "$normalizedName": {
+            ".write": "auth != null && (!data.exists() || data.val() == auth.uid)",
+            ".validate": "newData.isString() && newData.val() == auth.uid"
+          }
+        },
+        "votes": {
+          "$uid": {
+            ".write": "auth != null && auth.uid == $uid && !data.exists() && root.child('events').child($code).child('status').val() == 'open' && root.child('events').child($code).child('expiresAt').val() > now",
+            ".validate": "newData.hasChildren(['targetUid']) && newData.child('targetUid').isString() && root.child('events').child($code).child('participants').child($uid).exists() && root.child('events').child($code).child('participants').child(newData.child('targetUid').val()).exists() && newData.child('targetUid').val() != $uid"
+          }
+        },
+        "matchPairs": {
+          "$pair": {
+            ".write": "auth != null && !data.exists()",
+            ".validate": "newData.val() == true"
+          }
+        }
+      }
+    },
+    "privateMatches": {
+      "$code": {
+        "$uid": {
+          ".read": "auth != null && auth.uid == $uid",
+          "$pair": {
+            ".write": "auth != null && root.child('events').child($code).child('participants').child(auth.uid).exists()",
+            ".validate": "newData.hasChildren(['withUid', 'withName']) && newData.child('withUid').isString() && newData.child('withName').isString() && newData.child('withName').val().length <= 40"
+          }
+        }
+      }
+    }
+  }
+}
