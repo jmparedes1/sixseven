@@ -8,5 +8,6 @@ const firebaseConfig = {
   projectId: "sixseven-f8aaf",
   storageBucket: "sixseven-f8aaf.firebasestorage.app",
   messagingSenderId: "60839534765",
+   databaseURL: "https://sixseven-f8aaf-default-rtdb.europe-west1.firebasedatabase.app",
   appId: "1:60839534765:web:2fe5618e204202d93c2624"
 };
