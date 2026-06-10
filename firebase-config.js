@@ -3,7 +3,7 @@
 // Nota: estos datos no son una contraseña. La seguridad real depende de Authentication y de las reglas de Realtime Database.
 export const firebaseConfig = {
 const firebaseConfig = {
-  apiKey: "AIzaSyBsyCJp06y0cYmClvBpkxxJxrv31AuXvSc",
+   apiKey: "AIzaSyBsyCJp06y0cYmClvBpkxxJxrv31AuXvSc",
   authDomain: "sixseven-f8aaf.firebaseapp.com",
   projectId: "sixseven-f8aaf",
   storageBucket: "sixseven-f8aaf.firebasestorage.app",
