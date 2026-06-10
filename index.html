@@ -18,14 +18,14 @@
         Si dos personas se eligen mutuamente, ambas reciben un aviso privado de match.
       </p>
       <div class="actions">
-        <button type="button" id="showCreate" class="btn primary">Generar evento nuevo</button>
-        <button type="button" id="showJoin" class="btn secondary">Participar en un evento</button>
+        <button id="showCreate" class="btn primary">Generar evento nuevo</button>
+        <button id="showJoin" class="btn secondary">Participar en un evento</button>
       </div>
       <p class="legalNote">Uso recomendado para mayores de edad y eventos privados con consentimiento.</p>
     </section>
 
     <section id="createView" class="card view">
-      <button type="button" class="link" data-back>← Volver</button>
+      <button class="link" data-back>← Volver</button>
       <h2>Crear evento</h2>
       <label>Nombre del evento
         <input id="eventName" type="text" placeholder="Ej.: Cena de antiguos alumnos" maxlength="80" autocomplete="off" />
@@ -47,12 +47,12 @@
           <option value="168">7 días</option>
         </select>
       </label>
-      <button type="button" id="createEvent" class="btn primary full">Crear evento y generar código</button>
+      <button id="createEvent" class="btn primary full">Crear evento y generar código</button>
       <div id="createdBox" class="notice hidden"></div>
     </section>
 
     <section id="joinView" class="card view">
-      <button type="button" class="link" data-back>← Volver</button>
+      <button class="link" data-back>← Volver</button>
       <h2>Participar</h2>
       <label>Código de acceso
         <input id="joinCode" type="text" placeholder="Ej.: A7K9Q2" maxlength="8" autocomplete="one-time-code" />
@@ -60,12 +60,12 @@
       <label>Tu nombre visible
         <input id="participantName" type="text" placeholder="Ej.: Laura" maxlength="40" autocomplete="name" />
       </label>
-      <button type="button" id="joinEvent" class="btn primary full">Entrar al evento</button>
+      <button id="joinEvent" class="btn primary full">Entrar al evento</button>
       <p id="joinError" class="error"></p>
     </section>
 
     <section id="eventView" class="card view wide">
-      <button type="button" class="link" data-back>← Salir</button>
+      <button class="link" data-back>← Salir</button>
       <div class="eventHeader">
         <div>
           <p class="muted">Código: <strong id="currentCode"></strong></p>
@@ -88,9 +88,9 @@
       <section id="adminPanel" class="adminPanel hidden">
         <h3>Panel del creador</h3>
         <div class="adminActions">
-          <button type="button" id="copyInvite" class="btn secondary">Copiar invitación</button>
-          <button type="button" id="toggleEventStatus" class="btn secondary">Cerrar evento</button>
-          <button type="button" id="resetVotes" class="btn danger">Reiniciar votos</button>
+          <button id="copyInvite" class="btn secondary">Copiar invitación</button>
+          <button id="toggleEventStatus" class="btn secondary">Cerrar evento</button>
+          <button id="resetVotes" class="btn danger">Reiniciar votos</button>
         </div>
         <div class="qrBox">
           <img id="qrImage" alt="Código QR del evento" />
@@ -117,29 +117,6 @@
     <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
   </audio>
 
-
-  <script>
-    // Navegación básica de emergencia: permite que los botones principales funcionen
-    // aunque app.js falle por una configuración pendiente de Firebase.
-    (function () {
-      function byId(id) { return document.getElementById(id); }
-      function show(viewId) {
-        ["home", "createView", "joinView", "eventView"].forEach(function (id) {
-          var view = byId(id);
-          if (view) view.classList.toggle("active", id === viewId);
-        });
-      }
-      document.addEventListener("DOMContentLoaded", function () {
-        var createButton = byId("showCreate");
-        var joinButton = byId("showJoin");
-        if (createButton) createButton.addEventListener("click", function () { show("createView"); });
-        if (joinButton) joinButton.addEventListener("click", function () { show("joinView"); });
-        document.querySelectorAll("[data-back]").forEach(function (button) {
-          button.addEventListener("click", function () { show("home"); });
-        });
-      });
-    }());
-  </script>
   <script src="./firebase-config.js"></script>
   <script type="module" src="./app.js"></script>
 </body>

@@ -48,6 +48,7 @@
     },
     "privateMatches": {
       "$code": {
+        ".write": "auth != null && root.child('events').child($code).child('creatorUid').val() == auth.uid",
         "$uid": {
           ".read": "auth != null && auth.uid == $uid",
           "$pair": {

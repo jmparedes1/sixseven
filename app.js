@@ -11,7 +11,7 @@ import {
   runTransaction,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { firebaseConfig } from "./firebase-config.js";
+const firebaseConfig = window.SIXSEVEN_FIREBASE_CONFIG || {};
 
 const firebaseIsConfigured = Boolean(
   firebaseConfig?.apiKey &&
@@ -443,7 +443,12 @@ function buildInviteUrl(code) {
   return `${base}?code=${encodeURIComponent(code)}`;
 }
 
-onAuthStateChanged(auth, user => {
-  if (user) uid = user.uid;
-});
-signInAnonymously(auth).catch(console.error);
+if (firebaseIsConfigured && auth) {
+  onAuthStateChanged(auth, user => {
+    if (user) uid = user.uid;
+  });
+  signInAnonymously(auth).catch((error) => {
+    console.error(error);
+    toast("No se pudo iniciar sesión anónima. Revisa Authentication en Firebase.");
+  });
+}
