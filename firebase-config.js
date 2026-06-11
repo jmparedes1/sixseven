@@ -1,11 +1,11 @@
 // Pega aquí la configuración real de tu app web de Firebase.
 // Firebase Console > Configuración del proyecto > General > Tus apps > Config.
 window.SIXSEVEN_FIREBASE_CONFIG = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  databaseURL: "https://TU_PROYECTO-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyBsyCJp06y0cYmClvBpkxxJxrv31AuXvSc",
+  authDomain: "sixseven-f8aaf.firebaseapp.com",
+  databaseURL: "https://sixseven-f8aaf-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "sixseven-f8aaf",
+  storageBucket: "sixseven-f8aaf.firebasestorage.app",
+  messagingSenderId: "60839534765",
+  appId: "1:60839534765:web:2fe5618e204202d93c2624"
 };
