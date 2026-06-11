@@ -99,6 +99,15 @@
             </select>
           </label>
 
+          <label>Clave de creador
+            <input id="creatorKeyCreate" type="text" placeholder="Ej.: MI-CLAVE-67" maxlength="32" autocomplete="off" />
+            <small class="fieldHint">Guárdala. Te servirá para volver al panel si sales de la pantalla.</small>
+          </label>
+
+          <label>Repetir clave de creador
+            <input id="creatorKeyCreateRepeat" type="text" placeholder="Repite la clave" maxlength="32" autocomplete="off" />
+          </label>
+
           <label class="switch-row">
             <input id="soundEnabled" type="checkbox" />
             <span>Aviso sonoro discreto cuando haya match</span>
@@ -177,14 +186,61 @@
 
         <aside id="adminPanel" class="adminPanel glass-card hidden" aria-labelledby="adminTitle">
           <h3 id="adminTitle">Panel del creador</h3>
-          <p class="muted">La votación está activa desde la creación. Desde aquí puedes compartir, cerrar, reiniciar, eliminar el evento o expulsar participantes.</p>
+          <p class="muted">La votación está activa desde la creación. Desde aquí puedes compartir, modificar datos, cerrar, reiniciar, eliminar el evento o expulsar participantes.</p>
           <div class="adminActions">
             <button id="copyInvite" type="button" class="btn secondary">Copiar invitación</button>
+            <button id="copyCreatorAccess" type="button" class="btn secondary">Copiar acceso creador</button>
             <button id="whatsappInvite" type="button" class="btn secondary">WhatsApp</button>
             <button id="startVoting" type="button" class="btn primary hidden">Iniciar votación</button>
             <button id="toggleEventStatus" type="button" class="btn secondary">Cerrar evento</button>
             <button id="resetVotes" type="button" class="btn danger">Reiniciar votos</button>
             <button id="deleteEvent" type="button" class="btn danger outline">Eliminar evento</button>
+          </div>
+
+          <div class="adminSettingsBox">
+            <h4>Modificar datos del evento</h4>
+            <div class="form-grid compact-grid">
+              <label>Nombre del evento
+                <input id="adminEventName" type="text" maxlength="80" autocomplete="off" />
+              </label>
+              <label>Tipo de conexión
+                <select id="adminEventReason">
+                  <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
+                  <option value="Un café">☕ Un café</option>
+                  <option value="Una cena">🍷 Una cena</option>
+                  <option value="Una noche">🌙 Una noche</option>
+                </select>
+              </label>
+              <label>Número máximo de participantes
+                <select id="adminMaxParticipants">
+                  <option value="4">4 personas</option>
+                  <option value="6">6 personas</option>
+                  <option value="8">8 personas</option>
+                  <option value="10">10 personas</option>
+                  <option value="12">12 personas</option>
+                  <option value="0">Sin límite</option>
+                </select>
+              </label>
+              <label>Ampliar caducidad
+                <select id="adminExtendHours">
+                  <option value="0">No cambiar</option>
+                  <option value="2">Añadir 2 horas</option>
+                  <option value="6">Añadir 6 horas</option>
+                  <option value="24">Añadir 24 horas</option>
+                  <option value="72">Añadir 3 días</option>
+                  <option value="168">Añadir 7 días</option>
+                </select>
+              </label>
+              <label class="switch-row">
+                <input id="adminSoundEnabled" type="checkbox" />
+                <span>Aviso sonoro discreto cuando haya match</span>
+              </label>
+              <label>Nueva clave de creador, opcional
+                <input id="adminCreatorKeyNew" type="text" placeholder="Déjalo vacío si no quieres cambiarla" maxlength="32" autocomplete="off" />
+              </label>
+            </div>
+            <button id="saveAdminSettings" type="button" class="btn primary full">Guardar cambios del evento</button>
+            <p id="adminSettingsMsg" class="muted" aria-live="polite"></p>
           </div>
           <div class="qrBox">
             <img id="qrImage" alt="Código QR del evento" />

@@ -319,3 +319,32 @@ input:focus, select:focus { border-color: rgba(216,75,116,0.72); box-shadow: 0 0
     flex-direction: column;
   }
 }
+
+/* Mejoras del panel de creador */
+.fieldHint {
+  display: block;
+  margin-top: .4rem;
+  color: var(--muted, rgba(255,255,255,.64));
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+.adminSettingsBox {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+}
+
+.adminSettingsBox h4 {
+  margin: 0 0 .8rem;
+}
+
+.compact-grid {
+  gap: .8rem;
+}
+
+.adminSettingsBox .btn.full {
+  margin-top: .85rem;
+}

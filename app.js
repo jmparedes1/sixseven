@@ -92,6 +92,21 @@ function generateCreatorKey() {
   return `${part()}-${part()}-${part()}`;
 }
 
+function normalizeCreatorKey(value = "") {
+  return String(value)
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^A-Z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32);
+}
+
+function validCreatorKey(value = "") {
+  return /^[A-Z0-9-]{6,32}$/.test(value);
+}
+
 function adminStorageKey(code) {
   return `sixseven_admin_${code}`;
 }
@@ -254,10 +269,14 @@ bind("createEvent", "click", async () => {
   const durationHours = Number($("eventDuration").value || 24);
   const maxParticipants = Number($("maxParticipants")?.value || 0);
   const soundEnabled = Boolean($("soundEnabled")?.checked);
+  const creatorKey = normalizeCreatorKey($("creatorKeyCreate")?.value || "");
+  const creatorKeyRepeat = normalizeCreatorKey($("creatorKeyCreateRepeat")?.value || "");
 
   if (!rateLimit("create", 10000)) return;
   if (!name) return toast("Indica el nombre del evento.");
   if (!VALID_REASONS.includes(reason)) return toast("Selecciona un tipo de conexión válido.");
+  if (!validCreatorKey(creatorKey)) return toast("La clave de creador debe tener entre 6 y 32 caracteres: letras, números o guiones.");
+  if (creatorKey !== creatorKeyRepeat) return toast("Las dos claves de creador no coinciden.");
 
   try {
     button.disabled = true;
@@ -272,7 +291,6 @@ bind("createEvent", "click", async () => {
     }
 
     const expiresAt = Date.now() + durationHours * 60 * 60 * 1000;
-    const creatorKey = generateCreatorKey();
     await set(ref(db, `events/${code}`), {
       name,
       reason,
@@ -398,7 +416,7 @@ bind("joinEvent", "click", async () => {
 bind("creatorAccess", "click", async () => {
   const button = $("creatorAccess");
   const code = cleanCode($("creatorCode")?.value || $("joinCode")?.value || currentEventCode || "");
-  const key = ($("creatorKey")?.value || "").trim().toUpperCase();
+  const key = normalizeCreatorKey($("creatorKey")?.value || "");
   $("creatorAccessError").textContent = "";
 
   if (!code || !key) {
@@ -433,10 +451,61 @@ bind("copyInvite", "click", () => {
   copyText(inviteText(currentEventCode, currentEvent));
 });
 
+bind("copyCreatorAccess", "click", () => {
+  if (!currentEventCode || !currentEvent) return;
+  const storedKey = localStorage.getItem(adminStorageKey(currentEventCode)) || "";
+  const text = `Acceso de creador de sixseven
+Evento: ${currentEvent.name || "Evento privado"}
+Código: ${currentEventCode}
+Clave de creador: ${storedKey || "[clave no disponible en este navegador]"}
+Enlace: ${buildInviteUrl(currentEventCode)}`;
+  copyText(text);
+});
+
 bind("whatsappInvite", "click", () => {
   if (!currentEventCode || !currentEvent) return;
   const url = `https://wa.me/?text=${encodeURIComponent(inviteText(currentEventCode, currentEvent))}`;
   window.open(url, "_blank", "noopener,noreferrer");
+});
+
+bind("saveAdminSettings", "click", async () => {
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
+  const msg = $("adminSettingsMsg");
+  if (msg) msg.textContent = "";
+
+  const name = cleanName($("adminEventName")?.value || "");
+  const reason = $("adminEventReason")?.value || "";
+  const maxParticipants = Number($("adminMaxParticipants")?.value || 0);
+  const soundEnabled = Boolean($("adminSoundEnabled")?.checked);
+  const extendHours = Number($("adminExtendHours")?.value || 0);
+  const newCreatorKey = normalizeCreatorKey($("adminCreatorKeyNew")?.value || "");
+
+  if (!name) return toast("El nombre del evento no puede quedar vacío.");
+  if (!VALID_REASONS.includes(reason)) return toast("Selecciona un tipo de conexión válido.");
+  if (newCreatorKey && !validCreatorKey(newCreatorKey)) return toast("La nueva clave debe tener entre 6 y 32 caracteres: letras, números o guiones.");
+
+  try {
+    const eventUpdates = { name, reason, maxParticipants, soundEnabled };
+    if (extendHours > 0) {
+      const base = Math.max(Date.now(), Number(currentEvent.expiresAt || Date.now()));
+      eventUpdates.expiresAt = base + extendHours * 60 * 60 * 1000;
+    }
+    await update(ref(db, `events/${currentEventCode}`), eventUpdates);
+
+    if (newCreatorKey) {
+      await update(ref(db, `eventSecrets/${currentEventCode}`), { creatorKey: newCreatorKey });
+      await update(ref(db, `adminSessions/${currentEventCode}/${uid}`), { key: newCreatorKey, active: true, claimedAt: serverTimestamp() });
+      localStorage.setItem(adminStorageKey(currentEventCode), newCreatorKey);
+      $("adminCreatorKeyNew").value = "";
+    }
+
+    if ($("adminExtendHours")) $("adminExtendHours").value = "0";
+    if (msg) msg.textContent = "Cambios guardados.";
+    toast("Cambios del evento guardados.");
+  } catch (error) {
+    console.error("Error guardando ajustes:", error);
+    toast("No se pudieron guardar los cambios. Revisa las reglas de Firebase.");
+  }
 });
 
 bind("startVoting", "click", async () => {
@@ -574,9 +643,17 @@ function renderAdminPanel(isCreator, event, participants = {}, votes = {}) {
   }
 
   $("toggleEventStatus").textContent = event.status === "closed" ? "Reabrir votación" : "Cerrar evento";
+  populateAdminSettings(event);
   const inviteUrl = buildInviteUrl(currentEventCode);
   $("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(inviteUrl)}`;
   renderAdminParticipants(participants, votes);
+}
+
+function populateAdminSettings(event) {
+  if ($("adminEventName") && document.activeElement !== $("adminEventName")) $("adminEventName").value = event.name || "";
+  if ($("adminEventReason") && VALID_REASONS.includes(event.reason)) $("adminEventReason").value = event.reason;
+  if ($("adminMaxParticipants")) $("adminMaxParticipants").value = String(Number(event.maxParticipants || 0));
+  if ($("adminSoundEnabled")) $("adminSoundEnabled").checked = Boolean(event.soundEnabled);
 }
 
 function renderAdminParticipants(participants = {}, votes = {}) {

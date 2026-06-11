@@ -44,7 +44,7 @@
       "$code": {
         ".read": false,
         ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && ((!data.exists() && root.child('events').child($code).child('creatorUid').val() == auth.uid) || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-        ".validate": "!newData.exists() || (newData.hasChildren(['creatorKey','createdBy']) && newData.child('creatorKey').isString() && newData.child('creatorKey').val().matches(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/) && newData.child('createdBy').val() == root.child('events').child($code).child('creatorUid').val())"
+        ".validate": "!newData.exists() || (newData.hasChildren(['creatorKey','createdBy']) && newData.child('creatorKey').isString() && newData.child('creatorKey').val().matches(/^[A-Z0-9-]{6,32}$/) && newData.child('createdBy').val() == root.child('events').child($code).child('creatorUid').val())"
       }
     },
     "adminSessions": {

@@ -14,11 +14,14 @@ Aplicación web estática para GitHub Pages + Firebase Realtime Database.
   - “Participa solo si todas las personas del evento son adultas y aceptan formar parte del juego.”
 - Alias automático.
 - Límite de participantes configurable.
-- Evento creado inicialmente en modo espera.
-- Botón del creador para iniciar la votación.
+- Votación activa automáticamente al crear el evento.
+- El creador define su propia clave de acceso al crear la sala.
+- Acceso posterior como creador mediante código del evento + clave de creador.
+- Panel de creador mejorado para modificar nombre, tipo de conexión, límite de participantes, sonido, caducidad y clave.
 - Botón del creador para cerrar/reabrir el evento.
 - Botón de reinicio de votos y matches.
 - Botón para eliminar el evento.
+- Gestión de participantes: el creador puede eliminar participantes y limpiar sus votos/matches asociados.
 - Enlace de invitación, QR y botón de WhatsApp.
 - Aviso de match privado y discreto.
 - Sonido de match opcional.
@@ -56,8 +59,7 @@ La carpeta `_optional_cloud_functions` es opcional. No afecta a GitHub Pages.
 1. Entra en Firebase Console.
 2. Abre tu proyecto.
 3. Ve a Configuración del proyecto > General > Tus apps > Config.
-4. Copia los datos de `firebaseConfig`.
-5. Pégalos en `firebase-config.js` dentro de:
+4. Esta versión ya incluye los datos del proyecto `sixseven-f8aaf` facilitados por el creador. Si cambias de proyecto, copia los datos de `firebaseConfig` y sustitúyelos en `firebase-config.js` dentro de:
 
 ```js
 window.SIXSEVEN_FIREBASE_CONFIG = {
