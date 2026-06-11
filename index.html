@@ -62,7 +62,7 @@
         <button class="link" type="button" data-back>← Volver</button>
         <p class="eyebrow">crear sala privada</p>
         <h2 id="createTitle">Configura el evento</h2>
-        <p class="section-intro">El evento se abrirá primero en modo espera. Cuando estén las personas dentro, pulsa “Iniciar votación”.</p>
+        <p class="section-intro">La votación se abrirá automáticamente al crear el evento. Guarda la clave de creador para volver a administrar la sala más tarde.</p>
 
         <div class="form-grid">
           <label>Nombre del evento
@@ -135,6 +135,19 @@
 
         <button id="joinEvent" type="button" class="btn primary full">Entrar al evento</button>
         <p id="joinError" class="error" aria-live="polite"></p>
+
+        <div class="creatorAccessBox">
+          <h3>Acceso del creador</h3>
+          <p class="muted">Si creaste el evento y saliste de la pantalla, introduce el código y tu clave de creador para volver a administrar la sala.</p>
+          <label>Código del evento
+            <input id="creatorCode" type="text" placeholder="Ej.: A7K9Q2M8XR" maxlength="12" autocomplete="one-time-code" />
+          </label>
+          <label>Clave de creador
+            <input id="creatorKey" type="text" placeholder="Ej.: 7KQ9-M3XR-P2AB" maxlength="20" autocomplete="off" />
+          </label>
+          <button id="creatorAccess" type="button" class="btn secondary full">Acceder como creador</button>
+          <p id="creatorAccessError" class="error" aria-live="polite"></p>
+        </div>
       </div>
     </section>
 
@@ -164,11 +177,11 @@
 
         <aside id="adminPanel" class="adminPanel glass-card hidden" aria-labelledby="adminTitle">
           <h3 id="adminTitle">Panel del creador</h3>
-          <p class="muted">Comparte la invitación, espera a que entren las personas y después inicia la votación.</p>
+          <p class="muted">La votación está activa desde la creación. Desde aquí puedes compartir, cerrar, reiniciar, eliminar el evento o expulsar participantes.</p>
           <div class="adminActions">
             <button id="copyInvite" type="button" class="btn secondary">Copiar invitación</button>
             <button id="whatsappInvite" type="button" class="btn secondary">WhatsApp</button>
-            <button id="startVoting" type="button" class="btn primary">Iniciar votación</button>
+            <button id="startVoting" type="button" class="btn primary hidden">Iniciar votación</button>
             <button id="toggleEventStatus" type="button" class="btn secondary">Cerrar evento</button>
             <button id="resetVotes" type="button" class="btn danger">Reiniciar votos</button>
             <button id="deleteEvent" type="button" class="btn danger outline">Eliminar evento</button>
@@ -176,6 +189,10 @@
           <div class="qrBox">
             <img id="qrImage" alt="Código QR del evento" />
             <p class="muted">Escanea el QR o comparte el enlace privado.</p>
+          </div>
+          <div class="adminParticipantsBox">
+            <h4>Participantes</h4>
+            <div id="adminParticipants" class="adminParticipants"></div>
           </div>
         </aside>
 

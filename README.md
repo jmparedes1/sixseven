@@ -129,3 +129,11 @@ firebase.rules.production-cloud-functions.json
 ```
 
 En esa versión de producción, el navegador no debería escribir directamente `privateMatches` ni `matchPairs`; lo hace el servidor.
+
+## Cambios de esta versión
+
+- La votación queda abierta automáticamente al crear el evento; ya no hace falta pulsar “Iniciar votación”.
+- Al crear un evento se genera una **clave de creador**. Guárdala: permite volver al panel de administración desde otro navegador o dispositivo.
+- Desde el panel del creador se puede eliminar participantes. Al eliminar a una persona también se eliminan sus votos asociados y sus posibles avisos de match.
+- `firebase-config.js` ya incluye la configuración del proyecto `sixseven-f8aaf` indicada por el usuario.
+- Es obligatorio publicar también las nuevas reglas de `firebase.rules.json` en Firebase Realtime Database.

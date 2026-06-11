@@ -256,3 +256,66 @@ input:focus, select:focus { border-color: rgba(216,75,116,0.72); box-shadow: 0 0
 .consent-box span strong {
   color: rgba(255,255,255,.96);
 }
+
+/* Mejoras: acceso de creador y gestión de participantes */
+.creatorAccessBox,
+.creatorKeyBox,
+.adminParticipantsBox {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  background: rgba(255,255,255,.055);
+}
+
+.creatorAccessBox h3,
+.adminParticipantsBox h4 {
+  margin: 0 0 .55rem;
+}
+
+.creatorKeyBox code {
+  display: inline-block;
+  margin-top: .35rem;
+  padding: .35rem .55rem;
+  border-radius: 10px;
+  background: rgba(0,0,0,.32);
+  letter-spacing: .08em;
+  font-weight: 800;
+}
+
+.adminParticipants {
+  display: grid;
+  gap: .65rem;
+  margin-top: .75rem;
+}
+
+.adminParticipantRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .75rem;
+  border-radius: 14px;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+.adminParticipantRow span {
+  display: grid;
+  gap: .15rem;
+}
+
+.adminParticipantRow small {
+  color: var(--muted, rgba(255,255,255,.64));
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .adminParticipantRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -36,6 +36,8 @@ let currentParticipantName = null;
 let currentEvent = null;
 let eventUnsubscribe = null;
 let privateMatchUnsubscribe = null;
+let adminSessionUnsubscribe = null;
+let hasAdminAccess = false;
 
 const $ = (id) => document.getElementById(id);
 const views = ["home", "createView", "joinView", "eventView"];
@@ -82,6 +84,20 @@ function randomAlias() {
 
 function pairKey(a, b) {
   return [a, b].sort().join("_");
+}
+
+function generateCreatorKey() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const part = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return `${part()}-${part()}-${part()}`;
+}
+
+function adminStorageKey(code) {
+  return `sixseven_admin_${code}`;
+}
+
+function isAdmin(event = currentEvent) {
+  return Boolean(uid && event && (event.creatorUid === uid || hasAdminAccess));
 }
 
 function escapeHtml(text = "") {
@@ -191,8 +207,11 @@ function inviteText(code, event = currentEvent) {
 function stopListeners() {
   if (eventUnsubscribe) eventUnsubscribe();
   if (privateMatchUnsubscribe) privateMatchUnsubscribe();
+  if (adminSessionUnsubscribe) adminSessionUnsubscribe();
   eventUnsubscribe = null;
   privateMatchUnsubscribe = null;
+  adminSessionUnsubscribe = null;
+  hasAdminAccess = false;
   currentEventCode = null;
   currentEvent = null;
 }
@@ -253,20 +272,28 @@ bind("createEvent", "click", async () => {
     }
 
     const expiresAt = Date.now() + durationHours * 60 * 60 * 1000;
+    const creatorKey = generateCreatorKey();
     await set(ref(db, `events/${code}`), {
       name,
       reason,
       creatorUid: uid,
       createdAt: serverTimestamp(),
       expiresAt,
-      status: "waiting",
+      status: "open",
       maxParticipants,
       soundEnabled
     });
+    await set(ref(db, `eventSecrets/${code}`), {
+      creatorKey,
+      createdBy: uid,
+      createdAt: serverTimestamp()
+    });
+    localStorage.setItem(adminStorageKey(code), creatorKey);
 
     currentEventCode = code;
     currentParticipantName = "Creador";
-    renderCreatedBox(code, name, reason, expiresAt);
+    hasAdminAccess = true;
+    renderCreatedBox(code, name, reason, expiresAt, creatorKey);
     openEvent(code);
   } catch (error) {
     console.error("Error creando evento:", error);
@@ -277,15 +304,16 @@ bind("createEvent", "click", async () => {
   }
 });
 
-function renderCreatedBox(code, name, reason, expiresAt) {
+function renderCreatedBox(code, name, reason, expiresAt, creatorKey = "") {
   const inviteUrl = buildInviteUrl(code);
   $("createdBox").classList.remove("hidden");
   $("createdBox").innerHTML = `
-    <strong>Evento creado en modo espera.</strong><br>
+    <strong>Evento creado. La votación ya está abierta.</strong><br>
     <p>Código de acceso:</p>
     <button class="btn secondary" id="copyBtn" type="button">${escapeHtml(code)}</button>
     <p class="muted">${escapeHtml(name)} · ${escapeHtml(reason)} · caduca el ${formatDate(expiresAt)}</p>
     <p class="muted">Enlace privado: ${escapeHtml(inviteUrl)}</p>
+    ${creatorKey ? `<div class="creatorKeyBox"><strong>Clave de creador:</strong> <code>${escapeHtml(creatorKey)}</code><p class="muted">Guárdala. Te permitirá volver a administrar este evento desde otro navegador o dispositivo.</p></div>` : ""}
   `;
   $("copyBtn").addEventListener("click", () => copyText(code));
 }
@@ -366,6 +394,40 @@ bind("joinEvent", "click", async () => {
   }
 });
 
+
+bind("creatorAccess", "click", async () => {
+  const button = $("creatorAccess");
+  const code = cleanCode($("creatorCode")?.value || $("joinCode")?.value || currentEventCode || "");
+  const key = ($("creatorKey")?.value || "").trim().toUpperCase();
+  $("creatorAccessError").textContent = "";
+
+  if (!code || !key) {
+    $("creatorAccessError").textContent = "Introduce el código del evento y la clave de creador.";
+    return;
+  }
+
+  try {
+    button.disabled = true;
+    button.textContent = "Comprobando...";
+    await ensureAuth();
+    await set(ref(db, `adminSessions/${code}/${uid}`), {
+      active: true,
+      key,
+      claimedAt: serverTimestamp()
+    });
+    localStorage.setItem(adminStorageKey(code), key);
+    hasAdminAccess = true;
+    toast("Acceso de creador activado.");
+    openEvent(code);
+  } catch (error) {
+    console.error("Error accediendo como creador:", error);
+    $("creatorAccessError").textContent = "La clave de creador no es válida o las reglas no están actualizadas.";
+  } finally {
+    button.disabled = false;
+    button.textContent = "Acceder como creador";
+  }
+});
+
 bind("copyInvite", "click", () => {
   if (!currentEventCode || !currentEvent) return;
   copyText(inviteText(currentEventCode, currentEvent));
@@ -378,47 +440,66 @@ bind("whatsappInvite", "click", () => {
 });
 
 bind("startVoting", "click", async () => {
-  if (!currentEventCode || !currentEvent || currentEvent.creatorUid !== uid) return;
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
   await update(ref(db, `events/${currentEventCode}`), { status: "open" });
   toast("Votación iniciada.");
 });
 
 bind("toggleEventStatus", "click", async () => {
-  if (!currentEventCode || !currentEvent || currentEvent.creatorUid !== uid) return;
-  const nextStatus = currentEvent.status === "closed" ? "waiting" : "closed";
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
+  const nextStatus = currentEvent.status === "closed" ? "open" : "closed";
   await update(ref(db, `events/${currentEventCode}`), { status: nextStatus });
-  toast(nextStatus === "waiting" ? "Evento reabierto en modo espera." : "Evento cerrado.");
+  toast(nextStatus === "open" ? "Evento reabierto con votación activa." : "Evento cerrado.");
 });
 
 bind("resetVotes", "click", async () => {
-  if (!currentEventCode || !currentEvent || currentEvent.creatorUid !== uid) return;
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
   const ok = confirm("¿Seguro que quieres reiniciar todos los votos y avisos de match de este evento?");
   if (!ok) return;
   await remove(ref(db, `events/${currentEventCode}/votes`));
   await remove(ref(db, `events/${currentEventCode}/matchPairs`));
   await remove(ref(db, `privateMatches/${currentEventCode}`));
-  await update(ref(db, `events/${currentEventCode}`), { status: "waiting" });
-  toast("Votos y matches reiniciados. El evento vuelve a modo espera.");
+  await update(ref(db, `events/${currentEventCode}`), { status: "open" });
+  toast("Votos y matches reiniciados. La votación queda activa de nuevo.");
 });
 
 bind("deleteEvent", "click", async () => {
-  if (!currentEventCode || !currentEvent || currentEvent.creatorUid !== uid) return;
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
   const ok = confirm("¿Eliminar definitivamente este evento y sus avisos privados?");
   if (!ok) return;
   const code = currentEventCode;
-  await remove(ref(db, `events/${code}`));
   await remove(ref(db, `privateMatches/${code}`));
+  await remove(ref(db, `eventSecrets/${code}`));
+  await remove(ref(db, `adminSessions/${code}`));
+  await remove(ref(db, `events/${code}`));
+  localStorage.removeItem(adminStorageKey(code));
   toast("Evento eliminado.");
   stopListeners();
   show("home");
 });
 
+async function claimStoredAdminAccess(code) {
+  const storedKey = localStorage.getItem(adminStorageKey(code));
+  if (!storedKey || !uid) return;
+  try {
+    await set(ref(db, `adminSessions/${code}/${uid}`), {
+      active: true,
+      key: storedKey,
+      claimedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.warn("No se pudo recuperar automáticamente el acceso de creador:", error);
+  }
+}
+
 function openEvent(code) {
   show("eventView");
   $("currentCode").textContent = code;
+  claimStoredAdminAccess(code);
 
   if (eventUnsubscribe) eventUnsubscribe();
   if (privateMatchUnsubscribe) privateMatchUnsubscribe();
+  if (adminSessionUnsubscribe) adminSessionUnsubscribe();
 
   eventUnsubscribe = onValue(ref(db, `events/${code}`), (snap) => {
     const event = snap.val();
@@ -437,6 +518,11 @@ function openEvent(code) {
     const notices = snap.val() || {};
     Object.entries(notices).forEach(([key, notice]) => showMatch(notice.withName, key));
   });
+
+  adminSessionUnsubscribe = onValue(ref(db, `adminSessions/${code}/${uid}`), (snap) => {
+    hasAdminAccess = Boolean(snap.val()?.active);
+    if (currentEvent) renderEvent(currentEvent);
+  });
 }
 
 function statusText(event) {
@@ -449,7 +535,7 @@ function statusText(event) {
 function renderEvent(event) {
   const canVote = eventCanVote(event);
   const canJoin = eventCanJoin(event);
-  const isCreator = event.creatorUid === uid;
+  const isCreator = isAdmin(event);
   const participants = event.participants || {};
   const votes = event.votes || {};
   const myVote = votes[uid]?.targetUid;
@@ -465,29 +551,83 @@ function renderEvent(event) {
   $("voteHelp").textContent = !canJoin
     ? "El evento está cerrado o caducado. Puedes ver el contador, pero no emitir nuevos votos."
     : event.status === "waiting"
-      ? "La sala está en espera. El creador iniciará la votación cuando estén las personas dentro."
+      ? "La votación aún no está abierta."
       : myVote
         ? "Voto registrado. Tu elección es privada y no puede cambiarse en esta ronda."
         : "Tu voto es secreto. Solo se notificará si hay una elección mutua.";
 
-  renderAdminPanel(isCreator, event);
+  renderAdminPanel(isCreator, event, participants, votes);
   renderParticipants(participants, votes, canVote);
   renderMyVotesReceived(participants, votes);
   renderDistribution(participants, votes);
 }
 
-function renderAdminPanel(isCreator, event) {
+function renderAdminPanel(isCreator, event, participants = {}, votes = {}) {
   const panel = $("adminPanel");
   panel.classList.toggle("hidden", !isCreator);
   if (!isCreator || !currentEventCode) return;
 
   const startBtn = $("startVoting");
-  startBtn.disabled = event.status === "open" || event.status === "closed" || eventIsExpired(event);
-  startBtn.textContent = event.status === "open" ? "Votación iniciada" : "Iniciar votación";
+  if (startBtn) {
+    startBtn.classList.add("hidden");
+    startBtn.disabled = true;
+  }
 
-  $("toggleEventStatus").textContent = event.status === "closed" ? "Reabrir en espera" : "Cerrar evento";
+  $("toggleEventStatus").textContent = event.status === "closed" ? "Reabrir votación" : "Cerrar evento";
   const inviteUrl = buildInviteUrl(currentEventCode);
   $("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(inviteUrl)}`;
+  renderAdminParticipants(participants, votes);
+}
+
+function renderAdminParticipants(participants = {}, votes = {}) {
+  const box = $("adminParticipants");
+  if (!box) return;
+  box.innerHTML = "";
+  const entries = Object.entries(participants).sort(([, a], [, b]) => (a.name || "").localeCompare(b.name || ""));
+  if (!entries.length) {
+    box.innerHTML = `<p class="muted">Aún no hay participantes.</p>`;
+    return;
+  }
+  entries.forEach(([participantUid, participant]) => {
+    const received = Object.values(votes || {}).filter(v => v?.targetUid === participantUid).length;
+    const row = document.createElement("div");
+    row.className = "adminParticipantRow";
+    row.innerHTML = `
+      <span><strong>${escapeHtml(participant.name || "Participante")}</strong><small>${received} ${received === 1 ? "voto recibido" : "votos recibidos"}</small></span>
+      <button type="button" class="btn danger outline small" ${participantUid === uid ? "disabled" : ""}>Eliminar</button>
+    `;
+    row.querySelector("button")?.addEventListener("click", () => removeParticipant(participantUid, participant.name || "Participante"));
+    box.appendChild(row);
+  });
+}
+
+async function removeParticipant(participantUid, participantName) {
+  if (!currentEventCode || !isAdmin()) return;
+  if (participantUid === uid) return toast("No puedes eliminarte desde el panel del creador.");
+  const ok = confirm(`¿Eliminar a ${participantName} del evento? También se borrarán sus votos y posibles matches.`);
+  if (!ok) return;
+  try {
+    const updates = {};
+    updates[`events/${currentEventCode}/participants/${participantUid}`] = null;
+    updates[`events/${currentEventCode}/votes/${participantUid}`] = null;
+    updates[`privateMatches/${currentEventCode}/${participantUid}`] = null;
+    Object.entries(currentEvent?.votes || {}).forEach(([voterUid, vote]) => {
+      if (vote?.targetUid === participantUid) updates[`events/${currentEventCode}/votes/${voterUid}`] = null;
+    });
+    Object.entries(currentEvent?.participants || {}).forEach(([otherUid]) => {
+      const key = pairKey(otherUid, participantUid);
+      updates[`events/${currentEventCode}/matchPairs/${key}`] = null;
+      updates[`privateMatches/${currentEventCode}/${otherUid}/${key}`] = null;
+    });
+    if (participantUid && currentEvent?.participants?.[participantUid]?.normalizedName) {
+      updates[`events/${currentEventCode}/nameIndex/${currentEvent.participants[participantUid].normalizedName}`] = null;
+    }
+    await update(ref(db), updates);
+    toast("Participante eliminado.");
+  } catch (error) {
+    console.error("Error eliminando participante:", error);
+    toast("No se pudo eliminar. Revisa las reglas de Firebase.");
+  }
 }
 
 function renderParticipants(participants, votes, canVote) {
