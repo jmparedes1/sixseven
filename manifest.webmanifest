@@ -1,10 +1,9 @@
 {
   "name": "sixseven",
   "short_name": "sixseven",
-  "description": "Eventos privados con votación secreta y aviso de match.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#10111a",
-  "theme_color": "#10111a",
-  "lang": "es"
+  "background_color": "#0b0711",
+  "theme_color": "#0b0711",
+  "description": "Eventos privados con voto secreto y match mutuo."
 }

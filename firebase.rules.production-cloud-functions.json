@@ -5,30 +5,14 @@
         ".read": "auth != null && $code.matches(/^[A-Z0-9]{10}$/)",
         ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && (!data.exists() || data.child('creatorUid').val() == auth.uid)",
         ".validate": "newData.hasChildren(['name', 'reason', 'creatorUid', 'status', 'expiresAt'])",
-        "name": {
-          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
-        },
-        "reason": {
-          ".validate": "newData.isString() && newData.val().matches(/^(7 minutos a solas|Un café|Una cena|Una noche)$/)"
-        },
-        "creatorUid": {
-          ".validate": "newData.isString() && (!data.exists() ? newData.val() == auth.uid : newData.val() == data.child('creatorUid').val())"
-        },
-        "status": {
-          ".validate": "newData.val() == 'waiting' || newData.val() == 'open' || newData.val() == 'closed'"
-        },
-        "expiresAt": {
-          ".validate": "newData.isNumber() && newData.val() > now && newData.val() <= now + 604800000"
-        },
-        "createdAt": {
-          ".validate": "newData.isNumber()"
-        },
-        "maxParticipants": {
-          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
-        },
-        "soundEnabled": {
-          ".validate": "newData.isBoolean()"
-        },
+        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80" },
+        "reason": { ".validate": "newData.isString() && newData.val().matches(/^(7 minutos a solas|Un café|Una cena|Una noche)$/)" },
+        "creatorUid": { ".validate": "newData.isString() && (!data.exists() ? newData.val() == auth.uid : newData.val() == data.child('creatorUid').val())" },
+        "status": { ".validate": "newData.val() == 'waiting' || newData.val() == 'open' || newData.val() == 'closed'" },
+        "expiresAt": { ".validate": "newData.isNumber() && newData.val() > now && newData.val() <= now + 604800000" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "maxParticipants": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+        "soundEnabled": { ".validate": "newData.isBoolean()" },
         "participants": {
           "$uid": {
             ".write": "auth != null && auth.uid == $uid && !data.exists() && (root.child('events').child($code).child('status').val() == 'waiting' || root.child('events').child($code).child('status').val() == 'open') && root.child('events').child($code).child('expiresAt').val() > now",
@@ -49,23 +33,19 @@
         },
         "matchPairs": {
           "$pair": {
-            ".write": "auth != null && !data.exists() && root.child('events').child($code).child('status').val() == 'open' && root.child('events').child($code).child('expiresAt').val() > now",
+            ".read": "auth != null",
+            ".write": false,
             ".validate": "newData.val() == true"
           }
         },
-        "$other": {
-          ".validate": false
-        }
+        "$other": { ".validate": false }
       }
     },
     "privateMatches": {
       "$code": {
         "$uid": {
           ".read": "auth != null && auth.uid == $uid",
-          "$pair": {
-            ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && root.child('events').child($code).child('participants').child(auth.uid).exists() && root.child('events').child($code).child('expiresAt').val() > now",
-            ".validate": "newData.hasChildren(['withUid', 'withName']) && newData.child('withUid').isString() && newData.child('withName').isString() && newData.child('withName').val().length <= 40"
-          }
+          ".write": false
         }
       }
     }

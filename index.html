@@ -3,115 +3,223 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#10111a" />
-  <title>sixseven</title>
+  <meta name="theme-color" content="#0b0711" />
+  <title>sixseven · Eventos privados</title>
+  <meta name="description" content="sixseven: eventos privados con votación anónima y aviso de match mutuo." />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <main class="app">
-    <section id="home" class="card view active">
-      <div class="brand">sixseven</div>
-      <h1>Conecta en eventos privados</h1>
-      <p class="lead">
-        Crea un evento, comparte el código o el QR y deja que cada participante vote en secreto.
-        Si dos personas se eligen mutuamente, ambas reciben un aviso privado de match.
-      </p>
-      <div class="actions">
-        <button id="showCreate" class="btn primary">Generar evento nuevo</button>
-        <button id="showJoin" class="btn secondary">Participar en un evento</button>
-      </div>
-      <p class="legalNote">Uso recomendado para mayores de edad y eventos privados con consentimiento.</p>
-    </section>
+  <main class="app-shell">
+    <section id="home" class="view active hero-view" aria-labelledby="homeTitle">
+      <div class="ambient ambient-one"></div>
+      <div class="ambient ambient-two"></div>
 
-    <section id="createView" class="card view">
-      <button class="link" data-back>← Volver</button>
-      <h2>Crear evento</h2>
-      <label>Nombre del evento
-        <input id="eventName" type="text" placeholder="Ej.: Cena de antiguos alumnos" maxlength="80" autocomplete="off" />
-      </label>
-      <label>Motivo
-        <select id="eventReason">
-          <option value="7 minutos a solas">7 minutos a solas</option>
-          <option value="Un café">Un café</option>
-          <option value="Una cena">Una cena</option>
-          <option value="Una noche">Una noche</option>
-        </select>
-      </label>
-      <label>Duración del evento
-        <select id="eventDuration">
-          <option value="2">2 horas</option>
-          <option value="6">6 horas</option>
-          <option value="24" selected>24 horas</option>
-          <option value="72">3 días</option>
-          <option value="168">7 días</option>
-        </select>
-      </label>
-      <button id="createEvent" class="btn primary full">Crear evento y generar código</button>
-      <div id="createdBox" class="notice hidden"></div>
-    </section>
-
-    <section id="joinView" class="card view">
-      <button class="link" data-back>← Volver</button>
-      <h2>Participar</h2>
-      <label>Código de acceso
-        <input id="joinCode" type="text" placeholder="Ej.: A7K9Q2" maxlength="8" autocomplete="one-time-code" />
-      </label>
-      <label>Tu nombre visible
-        <input id="participantName" type="text" placeholder="Ej.: Laura" maxlength="40" autocomplete="name" />
-      </label>
-      <button id="joinEvent" class="btn primary full">Entrar al evento</button>
-      <p id="joinError" class="error"></p>
-    </section>
-
-    <section id="eventView" class="card view wide">
-      <button class="link" data-back>← Salir</button>
-      <div class="eventHeader">
-        <div>
-          <p class="muted">Código: <strong id="currentCode"></strong></p>
-          <h2 id="currentTitle"></h2>
-          <p id="currentReason" class="lead small"></p>
-          <p id="eventStatus" class="statusPill"></p>
-        </div>
-        <div class="counterGrid">
-          <div class="counter">
-            <span id="votesCount">0</span>
-            <small>votos emitidos</small>
-          </div>
-          <div class="counter">
-            <span id="participantCount">0</span>
-            <small>participantes</small>
+      <div class="home-card glass-card">
+        <div class="brand-row">
+          <div class="brand-mark">67</div>
+          <div>
+            <p class="eyebrow">eventos privados · votos secretos · coincidencias reales</p>
+            <div class="brand">sixseven</div>
           </div>
         </div>
+
+        <h1 id="homeTitle">Conexiones reales. Decisiones privadas.</h1>
+        <p class="lead">
+          Crea una sala privada, comparte el código y deja que cada persona elija en secreto.
+          Solo se revela una conexión cuando dos personas se eligen mutuamente.
+        </p>
+
+        <div class="trust-strip" aria-label="Principios de privacidad">
+          <span>Voto anónimo</span>
+          <span>Match privado</span>
+          <span>Evento temporal</span>
+        </div>
+
+        <div class="actions main-actions">
+          <button id="showCreate" type="button" class="btn primary xl">Crear un evento privado</button>
+          <button id="showJoin" type="button" class="btn secondary xl">Entrar con código</button>
+        </div>
+
+        <section class="how-card" aria-labelledby="howTitle">
+          <h2 id="howTitle">Cómo funciona</h2>
+          <div class="steps">
+            <article><strong>1</strong><span>Entras con nombre o alias.</span></article>
+            <article><strong>2</strong><span>Eliges solo a una persona.</span></article>
+            <article><strong>3</strong><span>Tu voto queda oculto.</span></article>
+            <article><strong>4</strong><span>Si hay elección mutua, hay match.</span></article>
+          </div>
+        </section>
+
+        <p class="legalNote">
+          Uso recomendado exclusivamente para personas adultas, en eventos privados y con consentimiento de quienes participan.
+        </p>
+      </div>
+    </section>
+
+    <section id="createView" class="view page-view" aria-labelledby="createTitle">
+      <div class="panel glass-card">
+        <button class="link" type="button" data-back>← Volver</button>
+        <p class="eyebrow">crear sala privada</p>
+        <h2 id="createTitle">Configura el evento</h2>
+        <p class="section-intro">El evento se abrirá primero en modo espera. Cuando estén las personas dentro, pulsa “Iniciar votación”.</p>
+
+        <div class="form-grid">
+          <label>Nombre del evento
+            <input id="eventName" type="text" placeholder="Ej.: Cena privada del viernes" maxlength="80" autocomplete="off" />
+          </label>
+
+          <label>Tipo de conexión
+            <select id="eventReason">
+              <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
+              <option value="Un café">☕ Un café</option>
+              <option value="Una cena">🍷 Una cena</option>
+              <option value="Una noche">🌙 Una noche</option>
+            </select>
+          </label>
+
+          <label>Duración del evento
+            <select id="eventDuration">
+              <option value="2">2 horas</option>
+              <option value="6">6 horas</option>
+              <option value="24" selected>24 horas</option>
+              <option value="72">3 días</option>
+              <option value="168">7 días</option>
+            </select>
+          </label>
+
+          <label>Número máximo de participantes
+            <select id="maxParticipants">
+              <option value="4">4 personas</option>
+              <option value="6">6 personas</option>
+              <option value="8" selected>8 personas</option>
+              <option value="10">10 personas</option>
+              <option value="12">12 personas</option>
+              <option value="0">Sin límite</option>
+            </select>
+          </label>
+
+          <label class="switch-row">
+            <input id="soundEnabled" type="checkbox" />
+            <span>Aviso sonoro discreto cuando haya match</span>
+          </label>
+        </div>
+
+        <button id="createEvent" type="button" class="btn primary full">Crear evento y generar código</button>
+        <div id="createdBox" class="notice hidden" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="joinView" class="view page-view" aria-labelledby="joinTitle">
+      <div class="panel glass-card">
+        <button class="link" type="button" data-back>← Volver</button>
+        <p class="eyebrow">acceso privado</p>
+        <h2 id="joinTitle">Entrar en un evento</h2>
+        <p class="section-intro">Tu elección será secreta. Solo se avisará si la otra persona también te elige.</p>
+
+        <label>Código de acceso
+          <input id="joinCode" type="text" placeholder="Ej.: A7K9Q2M8XR" maxlength="12" autocomplete="one-time-code" />
+        </label>
+
+        <label>Tu nombre visible o alias
+          <div class="inline-control">
+            <input id="participantName" type="text" placeholder="Ej.: Laura, L. o Invitada 03" maxlength="40" autocomplete="name" />
+            <button id="aliasBtn" type="button" class="btn ghost small">Alias</button>
+          </div>
+        </label>
+
+        <label class="consent-box">
+          <input id="consentCheck" type="checkbox" />
+          <span><strong>Entiendo que mi voto será privado y que solo se revelará si existe una coincidencia mutua.</strong><br>Participa solo si todas las personas del evento son adultas y aceptan formar parte del juego.</span>
+        </label>
+
+        <button id="joinEvent" type="button" class="btn primary full">Entrar al evento</button>
+        <p id="joinError" class="error" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section id="eventView" class="view event-view" aria-labelledby="currentTitle">
+      <div class="event-layout">
+        <header class="event-top glass-card">
+          <button class="link" type="button" data-back>← Salir</button>
+          <div class="eventHeader">
+            <div>
+              <p class="muted">Código: <strong id="currentCode"></strong></p>
+              <h2 id="currentTitle">Evento</h2>
+              <p id="currentReason" class="lead small"></p>
+              <p id="eventStatus" class="statusPill"></p>
+            </div>
+            <div class="counterGrid">
+              <div class="counter">
+                <span id="votesCount">0</span>
+                <small>votos emitidos</small>
+              </div>
+              <div class="counter">
+                <span id="participantCount">0</span>
+                <small>participantes</small>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <aside id="adminPanel" class="adminPanel glass-card hidden" aria-labelledby="adminTitle">
+          <h3 id="adminTitle">Panel del creador</h3>
+          <p class="muted">Comparte la invitación, espera a que entren las personas y después inicia la votación.</p>
+          <div class="adminActions">
+            <button id="copyInvite" type="button" class="btn secondary">Copiar invitación</button>
+            <button id="whatsappInvite" type="button" class="btn secondary">WhatsApp</button>
+            <button id="startVoting" type="button" class="btn primary">Iniciar votación</button>
+            <button id="toggleEventStatus" type="button" class="btn secondary">Cerrar evento</button>
+            <button id="resetVotes" type="button" class="btn danger">Reiniciar votos</button>
+            <button id="deleteEvent" type="button" class="btn danger outline">Eliminar evento</button>
+          </div>
+          <div class="qrBox">
+            <img id="qrImage" alt="Código QR del evento" />
+            <p class="muted">Escanea el QR o comparte el enlace privado.</p>
+          </div>
+        </aside>
+
+        <section class="vote-panel glass-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">votación privada</p>
+              <h3>¿Con quién quieres conectar?</h3>
+            </div>
+            <span class="privacy-badge">Solo una elección</span>
+          </div>
+          <p id="voteHelp" class="muted"></p>
+          <div id="participants" class="participants"></div>
+        </section>
+
+
+        <section id="myVotesReceivedBox" class="myVotesCard glass-card hidden" aria-live="polite">
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow">tu contador personal</p>
+              <h3>Votos recibidos por ti</h3>
+            </div>
+            <div class="personalCounter"><span id="myVotesReceived">0</span></div>
+          </div>
+          <p id="myVotesReceivedText" class="muted">Has recibido 0 votos.</p>
+        </section>
+
+        <section class="stats glass-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">estadística anónima</p>
+              <h3>Distribución de votos</h3>
+            </div>
+            <span class="privacy-badge">Sin nombres</span>
+          </div>
+          <div id="distribution" class="distribution"></div>
+        </section>
       </div>
 
-      <section id="adminPanel" class="adminPanel hidden">
-        <h3>Panel del creador</h3>
-        <div class="adminActions">
-          <button id="copyInvite" class="btn secondary">Copiar invitación</button>
-          <button id="toggleEventStatus" class="btn secondary">Cerrar evento</button>
-          <button id="resetVotes" class="btn danger">Reiniciar votos</button>
-        </div>
-        <div class="qrBox">
-          <img id="qrImage" alt="Código QR del evento" />
-          <p class="muted">El QR abre la web con el código del evento preparado.</p>
-        </div>
-      </section>
-
-      <h3>Elige solo a una persona</h3>
-      <p id="voteHelp" class="muted"></p>
-      <div id="participants" class="participants"></div>
-
-      <section class="stats">
-        <h3>Contador anónimo</h3>
-        <div id="distribution" class="distribution"></div>
-      </section>
-
-      <div id="matchAlert" class="match hidden"></div>
+      <div id="matchAlert" class="match hidden" role="dialog" aria-live="assertive"></div>
     </section>
   </main>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <audio id="alarm" preload="auto">
     <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">

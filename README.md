@@ -1,125 +1,131 @@
-# sixseven
+# sixseven · versión adulta premium reforzada
 
-**sixseven** es una aplicación web para crear eventos privados, compartir un código de acceso y permitir que los participantes voten en secreto. Cuando dos personas se votan mutuamente, ambas reciben un aviso privado de **match**.
+Aplicación web estática para GitHub Pages + Firebase Realtime Database.
 
-Esta versión está preparada para publicarse directamente en **GitHub Pages** como web estática, usando **Firebase Authentication anónimo** y **Firebase Realtime Database** para que la app funcione online y en tiempo real.
+## Mejoras incluidas en esta versión
 
-## Funciones incluidas
+- Diseño oscuro, elegante y orientado a eventos privados para personas adultas.
+- Pantalla principal con explicación clara de funcionamiento.
+- Lenguaje más discreto: voto privado, match privado, evento temporal.
+- Tipo de conexión con iconos.
+- Consentimiento inicial obligatorio antes de entrar.
+- Texto explícito de consentimiento:
+  - “Entiendo que mi voto será privado y que solo se revelará si existe una coincidencia mutua.”
+  - “Participa solo si todas las personas del evento son adultas y aceptan formar parte del juego.”
+- Alias automático.
+- Límite de participantes configurable.
+- Evento creado inicialmente en modo espera.
+- Botón del creador para iniciar la votación.
+- Botón del creador para cerrar/reabrir el evento.
+- Botón de reinicio de votos y matches.
+- Botón para eliminar el evento.
+- Enlace de invitación, QR y botón de WhatsApp.
+- Aviso de match privado y discreto.
+- Sonido de match opcional.
+- Estadísticas anónimas sin mostrar nombres.
+- Cada persona puede ver en su propia pantalla cuántos votos ha recibido.
+- Códigos de evento más largos: 10 caracteres.
+- Protección básica contra spam en cliente.
+- Reglas de Firebase más restrictivas.
+- Bloqueo de voto si el evento está cerrado, caducado o en espera.
+- Bloqueo para evitar voto a uno mismo.
+- Bloqueo de más de un voto por usuario y ronda.
+- Limpieza oportunista de eventos caducados cuando el creador abre una sala ya caducada.
 
-- Página principal con título, descripción y dos botones principales.
-- Creación de evento con nombre, motivo y duración.
-- Código de acceso automático.
-- Enlace de invitación con código incluido.
-- QR automático del evento.
-- Participación con código y nombre visible.
-- Prevención de nombres duplicados dentro del mismo evento.
-- Votación limitada a una persona.
-- Contador anónimo de votos emitidos.
-- Distribución anónima de votos recibidos: 0 votos, 1 voto, 2 votos, etc.
-- Detección de match cuando dos personas se votan mutuamente.
-- Aviso privado de match para las dos personas implicadas.
-- Panel del creador para copiar invitación, cerrar/reabrir evento y reiniciar votos.
-- Bloqueo automático si el evento está cerrado o caducado.
-- Diseño responsive para móvil y escritorio.
+## Archivos que debes subir a GitHub
 
-## Estructura del repositorio
+Sube estos archivos en la raíz del repositorio:
 
 ```text
-sixseven/
-├── .github/
-│   └── workflows/
-│       └── pages.yml
-├── .gitignore
-├── .nojekyll
-├── 404.html
-├── README.md
-├── app.js
-├── firebase-config.js
-├── firebase.rules.json
-├── index.html
-├── manifest.webmanifest
-└── style.css
+.github/workflows/pages.yml
+.nojekyll
+404.html
+README.md
+app.js
+firebase-config.js
+firebase.rules.json
+index.html
+manifest.webmanifest
+style.css
 ```
 
-## 1. Crear el proyecto en Firebase
+La carpeta `_optional_cloud_functions` es opcional. No afecta a GitHub Pages.
+
+## Configuración de Firebase
 
 1. Entra en Firebase Console.
-2. Crea un proyecto nuevo.
-3. Añade una aplicación web.
-4. Copia la configuración SDK de la app web.
-5. Activa **Authentication > Sign-in method > Anonymous**.
-6. Activa **Realtime Database**.
-7. Pega el contenido de `firebase.rules.json` en las reglas de Realtime Database y publícalas.
-
-## 2. Configurar Firebase en la app
-
-Abre `firebase-config.js` y sustituye los valores de ejemplo:
+2. Abre tu proyecto.
+3. Ve a Configuración del proyecto > General > Tus apps > Config.
+4. Copia los datos de `firebaseConfig`.
+5. Pégalos en `firebase-config.js` dentro de:
 
 ```js
-export const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  databaseURL: "https://TU_PROYECTO-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+window.SIXSEVEN_FIREBASE_CONFIG = {
+  apiKey: "...",
+  authDomain: "...",
+  databaseURL: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
 };
 ```
 
-Importante: esta configuración será visible en GitHub Pages. En Firebase web esto es normal; la protección real debe estar en **Authentication**, **reglas de base de datos** y, en una versión avanzada, **App Check** y **Cloud Functions**.
+## Reglas de Firebase para esta versión
 
-## 3. Publicar en GitHub Pages
-
-### Opción recomendada: GitHub Actions
-
-1. Crea un repositorio nuevo en GitHub, por ejemplo `sixseven`.
-2. Sube todos los archivos de esta carpeta al repositorio.
-3. En GitHub, entra en **Settings > Pages**.
-4. En **Build and deployment**, selecciona **GitHub Actions**.
-5. Haz un `commit` o pulsa **Run workflow** en la acción `Publicar sixseven en GitHub Pages`.
-6. Cuando termine, GitHub mostrará la URL pública de la app.
-
-El archivo `.github/workflows/pages.yml` ya está preparado para publicar automáticamente cada cambio en la rama `main`.
-
-### Opción simple: desplegar desde rama
-
-También puedes publicar desde **Settings > Pages > Deploy from a branch**, seleccionando la rama `main` y la carpeta raíz `/`. La opción de Actions suele ser más limpia porque deja el despliegue automatizado.
-
-## 4. Probar en local
-
-Puedes abrir `index.html` directamente, aunque para módulos JavaScript es más fiable levantar un servidor local:
-
-```bash
-python3 -m http.server 8080
-```
-
-Después abre:
+Copia el contenido de `firebase.rules.json` y pégalo en:
 
 ```text
-http://localhost:8080
+Realtime Database > Rules > Publicar
 ```
 
-## 5. Uso básico
+## Firebase Authentication
 
-1. Entra en la web publicada.
-2. Pulsa **Generar evento nuevo**.
-3. Escribe nombre, motivo y duración.
-4. Comparte el código, el enlace o el QR.
-5. Cada participante entra, escribe su nombre y vota a una persona.
-6. Si dos personas se votan mutuamente, ambas reciben un aviso de match.
+Activa:
 
-## Nota de seguridad profesional
+```text
+Authentication > Sign-in method > Anonymous
+```
 
-Esta versión es un MVP avanzado para web estática. Para una versión comercial o de uso masivo, se recomienda añadir:
+## GitHub Pages
 
-- Firebase App Check.
-- Cloud Functions para validar matches en servidor.
-- Moderación y eliminación automática de eventos antiguos.
-- Control antispam y límite de participantes.
-- Política de privacidad y condiciones de uso.
-- Mensajes de consentimiento explícito para participantes.
+En tu repositorio:
 
-## Licencia
+```text
+Settings > Pages > Build and deployment > GitHub Actions
+```
 
-Proyecto educativo/prototipo. Puedes adaptarlo a tus necesidades.
+Después espera a que en la pestaña Actions aparezca el símbolo verde.
+
+## Flujo de uso
+
+1. Crear evento.
+2. Compartir código, enlace, QR o WhatsApp.
+3. Las personas entran aceptando el consentimiento.
+4. El creador pulsa “Iniciar votación”.
+5. Cada participante vota solo a una persona.
+6. Cada persona puede ver su contador personal de votos recibidos.
+7. Si dos personas se votan mutuamente, reciben un aviso privado.
+8. El creador puede cerrar, reiniciar o eliminar el evento.
+
+## Versión seria con Cloud Functions
+
+GitHub Pages solo sirve archivos estáticos. No puede ejecutar código de servidor. Por eso, para una versión realmente seria, se incluye una carpeta opcional:
+
+```text
+_optional_cloud_functions
+```
+
+Esa carpeta contiene:
+
+- validación de matches en servidor cuando se crea un voto;
+- avisos privados escritos desde servidor;
+- limpieza automática diaria de eventos caducados.
+
+Para usarla necesitas Firebase CLI y desplegar Cloud Functions. En ese caso, puedes usar las reglas más estrictas de:
+
+```text
+firebase.rules.production-cloud-functions.json
+```
+
+En esa versión de producción, el navegador no debería escribir directamente `privateMatches` ni `matchPairs`; lo hace el servidor.
