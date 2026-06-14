@@ -38,10 +38,36 @@ let eventUnsubscribe = null;
 let privateMatchUnsubscribe = null;
 let adminSessionUnsubscribe = null;
 let hasAdminAccess = false;
+let roundTimerInterval = null;
+let activeChatUnsubscribe = null;
+let knownPrivateMatches = {};
+const autoShownMatches = new Set();
+let lastRenderedRoundSignature = null;
+let roundNoticeTimer = null;
 
 const $ = (id) => document.getElementById(id);
 const views = ["home", "createView", "joinView", "eventView"];
-const VALID_REASONS = ["7 minutos a solas", "Un café", "Una cena", "Una noche"];
+const VALID_REASONS = [
+  "Una conversación",
+  "Un café",
+  "Una copa",
+  "Un baile",
+  "Una cena",
+  "Una cita",
+  "7 minutos a solas",
+  "Una noche"
+];
+const VALID_THEMES = ["dark", "passion", "white", "night", "gold"];
+const THEME_LABELS = {
+  dark: "Elegante oscuro",
+  passion: "Rojo pasión",
+  white: "Minimal blanco",
+  night: "Fiesta nocturna",
+  gold: "Premium dorado"
+};
+const ROUND_DURATION_MS = 7 * 60 * 1000;
+const TOTAL_ROUNDS = 6;
+const TOTAL_EVENT_DURATION_MS = ROUND_DURATION_MS * TOTAL_ROUNDS;
 
 function bind(id, event, handler) {
   const el = $(id);
@@ -53,6 +79,17 @@ function show(viewId) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function normalizeTheme(value = "dark") {
+  return VALID_THEMES.includes(value) ? value : "dark";
+}
+
+function applyTheme(theme = "dark") {
+  const selected = normalizeTheme(theme);
+  document.body.classList.remove(...VALID_THEMES.map(t => `theme-${t}`));
+  document.body.classList.add(`theme-${selected}`);
+  document.documentElement.setAttribute("data-theme", selected);
+}
+
 function cleanCode(value = "") {
   return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
 }
@@ -60,6 +97,42 @@ function cleanCode(value = "") {
 function cleanName(value = "") {
   return value.trim().replace(/\s+/g, " ").slice(0, 40);
 }
+
+
+function cleanReason(value = "") {
+  return cleanName(value).slice(0, 40);
+}
+
+function getSelectedReason(selectId, customId) {
+  const selected = $(selectId)?.value || "";
+  if (selected === "__custom__") return cleanReason($(customId)?.value || "");
+  return selected;
+}
+
+function validReason(value = "") {
+  const clean = cleanReason(value);
+  return VALID_REASONS.includes(clean) || (clean.length >= 3 && clean.length <= 40);
+}
+
+function syncCustomReason(selectId, customId, currentValue = "") {
+  const select = $(selectId);
+  const custom = $(customId);
+  if (!select || !custom) return;
+
+  const value = currentValue || select.value;
+  if (value && !VALID_REASONS.includes(value) && value !== "__custom__") {
+    select.value = "__custom__";
+    custom.value = value;
+  }
+
+  const isCustom = select.value === "__custom__";
+  custom.classList.toggle("hidden", !isCustom);
+  custom.classList.toggle("customReasonVisible", isCustom);
+  if (isCustom && !custom.value && currentValue && currentValue !== "__custom__") {
+    custom.value = currentValue;
+  }
+}
+
 
 function normalizeName(value = "") {
   return cleanName(value)
@@ -111,6 +184,60 @@ function adminStorageKey(code) {
   return `sixseven_admin_${code}`;
 }
 
+
+function lastCreatorAccessKey() {
+  return "sixseven_last_creator_access";
+}
+
+function saveLastCreatorAccess(code, creatorKey, eventName = "Evento privado") {
+  if (!code || !creatorKey) return;
+  const payload = {
+    code,
+    creatorKey,
+    eventName,
+    savedAt: Date.now()
+  };
+  localStorage.setItem(lastCreatorAccessKey(), JSON.stringify(payload));
+  renderLastCreatorAccessBox();
+}
+
+function getLastCreatorAccess() {
+  try {
+    const raw = localStorage.getItem(lastCreatorAccessKey());
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.code || !parsed?.creatorKey) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function clearLastCreatorAccessIfMatches(code = "") {
+  const saved = getLastCreatorAccess();
+  if (!saved || (code && saved.code !== code)) return;
+  localStorage.removeItem(lastCreatorAccessKey());
+  renderLastCreatorAccessBox();
+}
+
+function renderLastCreatorAccessBox() {
+  const box = $("lastCreatorBox");
+  const info = $("lastCreatorInfo");
+  if (!box || !info) return;
+  const saved = getLastCreatorAccess();
+  box.classList.toggle("hidden", !saved);
+  if (!saved) {
+    info.innerHTML = "";
+    return;
+  }
+  info.innerHTML = `
+    <div class="savedRow"><span>Evento</span><strong>${escapeHtml(saved.eventName || "Evento privado")}</strong></div>
+    <div class="savedRow"><span>Código</span><strong>${escapeHtml(saved.code)}</strong></div>
+    <div class="savedRow"><span>Guardado</span><strong>${formatDate(saved.savedAt)}</strong></div>
+  `;
+}
+
+
 function isAdmin(event = currentEvent) {
   return Boolean(uid && event && (event.creatorUid === uid || hasAdminAccess));
 }
@@ -124,18 +251,125 @@ function escapeHtml(text = "") {
     .replaceAll("'", "&#039;");
 }
 
+function getRoundInfo(event) {
+  const startedAt = Number(event?.roundStartedAt || event?.createdAt || Date.now());
+  const roundDuration = Number(event?.roundDurationMs || ROUND_DURATION_MS);
+  const totalRounds = Number(event?.totalRounds || TOTAL_ROUNDS);
+  const now = Date.now();
+  const elapsed = Math.max(0, now - startedAt);
+  const totalDuration = roundDuration * totalRounds;
+
+  if (elapsed >= totalDuration || (event?.expiresAt && now > Number(event.expiresAt))) {
+    return {
+      currentRound: totalRounds,
+      roundKey: String(totalRounds),
+      totalRounds,
+      roundDuration,
+      msRemaining: 0,
+      eventEnded: true,
+      elapsed,
+      progress: 100
+    };
+  }
+
+  const currentRound = Math.min(totalRounds, Math.floor(elapsed / roundDuration) + 1);
+  const roundEndsAt = startedAt + currentRound * roundDuration;
+  const msRemaining = Math.max(0, roundEndsAt - now);
+  const progress = Math.min(100, Math.round((elapsed / totalDuration) * 100));
+  return {
+    currentRound,
+    roundKey: String(currentRound),
+    totalRounds,
+    roundDuration,
+    msRemaining,
+    eventEnded: false,
+    elapsed,
+    progress
+  };
+}
+
+function formatRemaining(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
 function eventIsExpired(event) {
-  return Boolean(event?.expiresAt && Date.now() > event.expiresAt);
+  return Boolean(event?.expiresAt && Date.now() > event.expiresAt) || getRoundInfo(event).eventEnded;
 }
 
 function eventCanJoin(event) {
-  return ["waiting", "open"].includes(event?.status) && !eventIsExpired(event);
+  if (!["waiting", "open"].includes(event?.status) || eventIsExpired(event)) return false;
+  if (event?.closeEntryRound2 && getRoundInfo(event).currentRound >= 2) return false;
+  return true;
 }
 
 function eventCanVote(event) {
-  return event?.status === "open" && !eventIsExpired(event);
+  return event?.status === "open" && !eventIsExpired(event) && !getRoundInfo(event).eventEnded;
 }
 
+
+const ROUND_RING_CIRCUMFERENCE = 2 * Math.PI * 54;
+
+function renderRoundVisualizer(round) {
+  const timerMain = $("roundTimerMain");
+  const miniLabel = $("roundMiniLabel");
+  const ring = $("roundRingProgress");
+  const progressBar = $("roundProgressMain");
+  const status = $("roundStatus");
+  const hint = $("roundHintText");
+  if (!timerMain || !miniLabel || !ring) return;
+
+  const roundElapsed = Math.max(0, round.roundDuration - round.msRemaining);
+  const roundPercent = round.eventEnded ? 100 : Math.min(100, Math.round((roundElapsed / round.roundDuration) * 100));
+  const offset = ROUND_RING_CIRCUMFERENCE * (1 - roundPercent / 100);
+  ring.style.strokeDasharray = String(ROUND_RING_CIRCUMFERENCE);
+  ring.style.strokeDashoffset = String(offset);
+
+  timerMain.textContent = round.eventEnded ? "00:00" : formatRemaining(round.msRemaining);
+  miniLabel.textContent = round.eventEnded ? "Evento finalizado" : `Ronda ${round.currentRound}/${round.totalRounds}`;
+  if (status) status.textContent = round.eventEnded ? `Evento finalizado · ${round.totalRounds}/${round.totalRounds}` : `Ronda ${round.currentRound} de ${round.totalRounds} · ${formatRemaining(round.msRemaining)}`;
+  if (progressBar) progressBar.style.width = `${round.progress}%`;
+  if (hint) hint.textContent = round.eventEnded ? "Las rondas han terminado. Puedes revisar los resultados y los chats privados." : (roundPercent >= 85 ? "Queda muy poco para que se abra una nueva ronda." : "El voto se reinicia automáticamente al comenzar cada nueva ronda.");
+}
+
+function showRoundNotice(title, message) {
+  const box = $("roundNotice");
+  if (!box) return;
+  box.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(message)}</span>`;
+  box.classList.remove('hidden');
+  requestAnimationFrame(() => box.classList.add('show'));
+  if (roundNoticeTimer) clearTimeout(roundNoticeTimer);
+  roundNoticeTimer = setTimeout(() => {
+    box.classList.remove('show');
+    setTimeout(() => box.classList.add('hidden'), 280);
+  }, 3400);
+}
+
+function handleRoundTransition(round) {
+  const signature = `${currentEventCode || ''}_${round.currentRound}_${round.eventEnded ? 'end' : 'live'}`;
+  if (!lastRenderedRoundSignature) {
+    lastRenderedRoundSignature = signature;
+    return;
+  }
+  if (lastRenderedRoundSignature === signature) return;
+
+  const previous = lastRenderedRoundSignature;
+  lastRenderedRoundSignature = signature;
+  if (round.eventEnded) {
+    showRoundNotice('Evento finalizado', 'Las seis rondas se han completado. Ya puedes revisar resultados y matches.');
+    return;
+  }
+  showRoundNotice(`Nueva ronda ${round.currentRound}`, 'Ya puedes volver a votar. Tu elección anterior se ha reiniciado.');
+}
+
+function participantCardMeta(participantUid, myVote, canVote) {
+  if (myVote === participantUid) return 'Elegida en esta ronda';
+  if (!canVote) return 'Votación cerrada en este momento';
+  if (myVote) return 'Ya has usado tu voto';
+  return 'Una sola elección por ronda';
+}
 function formatDate(timestamp) {
   if (!timestamp) return "sin fecha";
   return new Intl.DateTimeFormat("es-ES", {
@@ -216,7 +450,19 @@ function buildInviteUrl(code) {
 }
 
 function inviteText(code, event = currentEvent) {
-  return `Te invito a participar en sixseven.\nEvento: ${event?.name || "Evento privado"}\nTipo de conexión: ${event?.reason || "Privado"}\nCódigo: ${code}\nEnlace: ${buildInviteUrl(code)}`;
+  const roundInfo = event ? getRoundInfo(event) : { totalRounds: TOTAL_ROUNDS };
+  return `Te invito a participar en un evento privado en sixseven.
+
+Evento: ${event?.name || "Evento privado"}
+Tipo de conexión: ${event?.reason || "Privado"}
+Dinámica: ${roundInfo.totalRounds || TOTAL_ROUNDS} rondas de 7 minutos
+Código: ${code}
+
+Entra aquí:
+${buildInviteUrl(code)}
+
+Tu voto será privado. Solo se revelará si hay match mutuo.
+Participa solo si eres una persona adulta y aceptas formar parte del juego.`;
 }
 
 function stopListeners() {
@@ -227,8 +473,19 @@ function stopListeners() {
   privateMatchUnsubscribe = null;
   adminSessionUnsubscribe = null;
   hasAdminAccess = false;
+  if (roundTimerInterval) clearInterval(roundTimerInterval);
+  if (activeChatUnsubscribe) activeChatUnsubscribe();
+  activeChatUnsubscribe = null;
+  knownPrivateMatches = {};
+  autoShownMatches.clear();
+  renderMyMatches();
+  lastRenderedRoundSignature = null;
+  if (roundNoticeTimer) clearTimeout(roundNoticeTimer);
+  $("roundNotice")?.classList.add("hidden");
+  roundTimerInterval = null;
   currentEventCode = null;
   currentEvent = null;
+  applyTheme("dark");
 }
 
 function setupInviteFromUrl() {
@@ -246,6 +503,16 @@ bind("aliasBtn", "click", () => {
   $("participantName").value = randomAlias();
   $("participantName").focus();
 });
+
+window.addEventListener("DOMContentLoaded", () => {
+  applyTheme("dark");
+  renderLastCreatorAccessBox();
+  syncCustomReason("eventReason", "eventReasonCustom");
+  syncCustomReason("adminEventReason", "adminEventReasonCustom");
+});
+
+bind("eventReason", "change", () => syncCustomReason("eventReason", "eventReasonCustom"));
+bind("adminEventReason", "change", () => syncCustomReason("adminEventReason", "adminEventReasonCustom"));
 
 document.querySelectorAll("[data-back]").forEach(btn => btn.addEventListener("click", () => {
   stopListeners();
@@ -265,16 +532,17 @@ if (!firebaseIsConfigured) {
 bind("createEvent", "click", async () => {
   const button = $("createEvent");
   const name = cleanName($("eventName").value);
-  const reason = $("eventReason").value;
-  const durationHours = Number($("eventDuration").value || 24);
+  const reason = getSelectedReason("eventReason", "eventReasonCustom");
+  const theme = normalizeTheme($("eventTheme")?.value || "dark");
   const maxParticipants = Number($("maxParticipants")?.value || 0);
+  const closeEntryRound2 = Boolean($("closeEntryRound2")?.checked);
   const soundEnabled = Boolean($("soundEnabled")?.checked);
   const creatorKey = normalizeCreatorKey($("creatorKeyCreate")?.value || "");
   const creatorKeyRepeat = normalizeCreatorKey($("creatorKeyCreateRepeat")?.value || "");
 
   if (!rateLimit("create", 10000)) return;
   if (!name) return toast("Indica el nombre del evento.");
-  if (!VALID_REASONS.includes(reason)) return toast("Selecciona un tipo de conexión válido.");
+  if (!validReason(reason)) return toast("Selecciona o escribe un tipo de conexión válido.");
   if (!validCreatorKey(creatorKey)) return toast("La clave de creador debe tener entre 6 y 32 caracteres: letras, números o guiones.");
   if (creatorKey !== creatorKeyRepeat) return toast("Las dos claves de creador no coinciden.");
 
@@ -290,7 +558,8 @@ bind("createEvent", "click", async () => {
       exists = await get(ref(db, `events/${code}`));
     }
 
-    const expiresAt = Date.now() + durationHours * 60 * 60 * 1000;
+    const roundStartedAt = Date.now();
+    const expiresAt = roundStartedAt + TOTAL_EVENT_DURATION_MS;
     await set(ref(db, `events/${code}`), {
       name,
       reason,
@@ -299,7 +568,11 @@ bind("createEvent", "click", async () => {
       expiresAt,
       status: "open",
       maxParticipants,
-      soundEnabled
+      closeEntryRound2,
+      soundEnabled,
+      roundStartedAt,
+      roundDurationMs: ROUND_DURATION_MS,
+      totalRounds: TOTAL_ROUNDS
     });
     await set(ref(db, `eventSecrets/${code}`), {
       creatorKey,
@@ -307,6 +580,7 @@ bind("createEvent", "click", async () => {
       createdAt: serverTimestamp()
     });
     localStorage.setItem(adminStorageKey(code), creatorKey);
+    saveLastCreatorAccess(code, creatorKey, name);
 
     currentEventCode = code;
     currentParticipantName = "Creador";
@@ -326,10 +600,10 @@ function renderCreatedBox(code, name, reason, expiresAt, creatorKey = "") {
   const inviteUrl = buildInviteUrl(code);
   $("createdBox").classList.remove("hidden");
   $("createdBox").innerHTML = `
-    <strong>Evento creado. La votación ya está abierta.</strong><br>
+    <strong>Evento creado. La ronda 1 ya está abierta.</strong><br>
     <p>Código de acceso:</p>
     <button class="btn secondary" id="copyBtn" type="button">${escapeHtml(code)}</button>
-    <p class="muted">${escapeHtml(name)} · ${escapeHtml(reason)} · caduca el ${formatDate(expiresAt)}</p>
+    <p class="muted">${escapeHtml(name)} · ${escapeHtml(reason)} · 6 rondas de 7 minutos · finaliza el ${formatDate(expiresAt)}</p>
     <p class="muted">Enlace privado: ${escapeHtml(inviteUrl)}</p>
     ${creatorKey ? `<div class="creatorKeyBox"><strong>Clave de creador:</strong> <code>${escapeHtml(creatorKey)}</code><p class="muted">Guárdala. Te permitirá volver a administrar este evento desde otro navegador o dispositivo.</p></div>` : ""}
   `;
@@ -434,6 +708,7 @@ bind("creatorAccess", "click", async () => {
       claimedAt: serverTimestamp()
     });
     localStorage.setItem(adminStorageKey(code), key);
+    saveLastCreatorAccess(code, key, currentEvent?.name || "Evento privado", currentEvent?.recoveryQuestion || "");
     hasAdminAccess = true;
     toast("Acceso de creador activado.");
     openEvent(code);
@@ -445,6 +720,60 @@ bind("creatorAccess", "click", async () => {
     button.textContent = "Acceder como creador";
   }
 });
+
+
+bind("loadRecoveryQuestion", "click", async () => {
+  const code = cleanCode($("creatorCode")?.value || $("joinCode")?.value || currentEventCode || "");
+  const error = $("recoveryAccessError");
+  if (error) error.textContent = "";
+  if (!code) {
+    if (error) error.textContent = "Introduce primero el código del evento.";
+    return;
+  }
+  try {
+    await ensureAuth();
+    const snap = await get(ref(db, `events/${code}/recoveryQuestion`));
+    const question = snap.val();
+    if (!question) {
+      if (error) error.textContent = "Este evento no tiene pregunta de recuperación configurada.";
+      return;
+    }
+    $("recoveryQuestionBox")?.classList.remove("hidden");
+    $("recoveryQuestionText").textContent = question;
+  } catch (err) {
+    console.error("Error cargando pregunta de recuperación:", err);
+    if (error) error.textContent = "No se pudo cargar la pregunta de recuperación.";
+  }
+});
+
+bind("recoverCreatorWithAnswer", "click", async () => {
+  const code = cleanCode($("creatorCode")?.value || $("joinCode")?.value || currentEventCode || "");
+  const answer = normalizeRecoveryAnswer($("recoveryAnswer")?.value || "");
+  const error = $("recoveryAccessError");
+  if (error) error.textContent = "";
+  if (!code || !answer) {
+    if (error) error.textContent = "Introduce el código y la respuesta de recuperación.";
+    return;
+  }
+  try {
+    await ensureAuth();
+    await set(ref(db, `adminSessions/${code}/${uid}`), {
+      active: true,
+      recoveryAnswer: answer,
+      claimedAt: serverTimestamp()
+    });
+    hasAdminAccess = true;
+    const eventSnap = await get(ref(db, `events/${code}`));
+    const event = eventSnap.val() || {};
+    saveLastCreatorAccess(code, "[recuperado con pregunta]", event.name || "Evento privado", event.recoveryQuestion || "");
+    toast("Acceso de creador recuperado con pregunta.");
+    openEvent(code);
+  } catch (err) {
+    console.error("Error recuperando acceso con pregunta:", err);
+    if (error) error.textContent = "Respuesta incorrecta o reglas de Firebase sin actualizar.";
+  }
+});
+
 
 bind("copyInvite", "click", () => {
   if (!currentEventCode || !currentEvent) return;
@@ -468,24 +797,107 @@ bind("whatsappInvite", "click", () => {
   window.open(url, "_blank", "noopener,noreferrer");
 });
 
+
+bind("generateStickersPdf", "click", async () => {
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
+  await generateStickersPdf();
+});
+
+
+bind("recoverLastCreator", "click", async () => {
+  const saved = getLastCreatorAccess();
+  if (!saved) return toast("No hay ningún acceso de creador guardado en este dispositivo.");
+  await ensureAuth();
+  try {
+    await set(ref(db, `adminSessions/${saved.code}/${uid}`), {
+      active: true,
+      key: saved.creatorKey,
+      claimedAt: serverTimestamp()
+    });
+    localStorage.setItem(adminStorageKey(saved.code), saved.creatorKey);
+    hasAdminAccess = true;
+    toast("Acceso de creador recuperado.");
+    openEvent(saved.code);
+  } catch (error) {
+    console.error("Error recuperando acceso de creador:", error);
+    toast("No se pudo recuperar el evento. Revisa la clave guardada o las reglas.");
+  }
+});
+
+bind("clearLastCreator", "click", () => {
+  localStorage.removeItem(lastCreatorAccessKey());
+  renderLastCreatorAccessBox();
+  toast("Acceso guardado borrado de este dispositivo.");
+});
+
+bind("openPublicScreen", "click", () => {
+  if (!currentEvent) return;
+  const screen = $("publicScreen");
+  if (!screen) return;
+  screen.classList.remove("hidden");
+  document.body.classList.add("public-mode");
+  renderPublicScreen(currentEvent);
+});
+
+bind("closePublicScreen", "click", () => {
+  $("publicScreen")?.classList.add("hidden");
+  document.body.classList.remove("public-mode");
+});
+
+
+bind("sendAnnouncement", "click", async () => {
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
+  const input = $("adminAnnouncementText");
+  const text = cleanName(input?.value || "").slice(0, 120);
+  if (!text) return toast("Escribe el aviso antes de enviarlo.");
+  try {
+    const key = `${Date.now()}_${uid}`;
+    await set(ref(db, `events/${currentEventCode}/announcements/${key}`), {
+      text,
+      createdAt: Date.now(),
+      creatorUid: uid
+    });
+    input.value = "";
+    toast("Aviso enviado a todos los participantes.");
+  } catch (error) {
+    console.error("Error enviando aviso:", error);
+    toast("No se pudo enviar el aviso. Revisa las reglas.");
+  }
+});
+
+bind("deleteMyParticipation", "click", async () => {
+  await deleteMyParticipation();
+});
+
+bind("generatePosterPdf", "click", async () => {
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
+  await generatePosterPdf();
+});
+
+
 bind("saveAdminSettings", "click", async () => {
   if (!currentEventCode || !currentEvent || !isAdmin()) return;
   const msg = $("adminSettingsMsg");
   if (msg) msg.textContent = "";
 
   const name = cleanName($("adminEventName")?.value || "");
-  const reason = $("adminEventReason")?.value || "";
+  const reason = getSelectedReason("adminEventReason", "adminEventReasonCustom");
+  const theme = normalizeTheme($("adminEventTheme")?.value || currentEvent?.theme || "dark");
   const maxParticipants = Number($("adminMaxParticipants")?.value || 0);
+  const closeEntryRound2 = Boolean($("adminCloseEntryRound2")?.checked);
   const soundEnabled = Boolean($("adminSoundEnabled")?.checked);
   const extendHours = Number($("adminExtendHours")?.value || 0);
   const newCreatorKey = normalizeCreatorKey($("adminCreatorKeyNew")?.value || "");
+  const recoveryQuestion = cleanName($("adminRecoveryQuestion")?.value || "");
+  const recoveryAnswer = normalizeRecoveryAnswer($("adminRecoveryAnswer")?.value || "");
 
   if (!name) return toast("El nombre del evento no puede quedar vacío.");
-  if (!VALID_REASONS.includes(reason)) return toast("Selecciona un tipo de conexión válido.");
+  if (!validReason(reason)) return toast("Selecciona o escribe un tipo de conexión válido.");
   if (newCreatorKey && !validCreatorKey(newCreatorKey)) return toast("La nueva clave debe tener entre 6 y 32 caracteres: letras, números o guiones.");
+  if (recoveryAnswer && !validRecovery(recoveryQuestion, recoveryAnswer)) return toast("Para cambiar la respuesta, indica también una pregunta de recuperación válida.");
 
   try {
-    const eventUpdates = { name, reason, maxParticipants, soundEnabled };
+    const eventUpdates = { name, reason, theme, maxParticipants, closeEntryRound2, soundEnabled, recoveryQuestion };
     if (extendHours > 0) {
       const base = Math.max(Date.now(), Number(currentEvent.expiresAt || Date.now()));
       eventUpdates.expiresAt = base + extendHours * 60 * 60 * 1000;
@@ -496,9 +908,15 @@ bind("saveAdminSettings", "click", async () => {
       await update(ref(db, `eventSecrets/${currentEventCode}`), { creatorKey: newCreatorKey });
       await update(ref(db, `adminSessions/${currentEventCode}/${uid}`), { key: newCreatorKey, active: true, claimedAt: serverTimestamp() });
       localStorage.setItem(adminStorageKey(currentEventCode), newCreatorKey);
+      saveLastCreatorAccess(currentEventCode, newCreatorKey, name || currentEvent?.name || "Evento privado", currentEvent?.recoveryQuestion || "");
       $("adminCreatorKeyNew").value = "";
     }
 
+    if (recoveryAnswer) {
+      await update(ref(db, `eventSecrets/${currentEventCode}`), { recoveryAnswer });
+      $("adminRecoveryAnswer").value = "";
+    }
+    saveLastCreatorAccess(currentEventCode, localStorage.getItem(adminStorageKey(currentEventCode)) || "[clave no disponible]", name || currentEvent?.name || "Evento privado", recoveryQuestion || "");
     if ($("adminExtendHours")) $("adminExtendHours").value = "0";
     if (msg) msg.textContent = "Cambios guardados.";
     toast("Cambios del evento guardados.");
@@ -523,13 +941,22 @@ bind("toggleEventStatus", "click", async () => {
 
 bind("resetVotes", "click", async () => {
   if (!currentEventCode || !currentEvent || !isAdmin()) return;
-  const ok = confirm("¿Seguro que quieres reiniciar todos los votos y avisos de match de este evento?");
+  const ok = confirm("¿Seguro que quieres reiniciar todas las rondas, votos y avisos de match de este evento?");
   if (!ok) return;
+  const now = Date.now();
+  await remove(ref(db, `events/${currentEventCode}/votesByRound`));
+  await remove(ref(db, `events/${currentEventCode}/matchPairsByRound`));
   await remove(ref(db, `events/${currentEventCode}/votes`));
   await remove(ref(db, `events/${currentEventCode}/matchPairs`));
   await remove(ref(db, `privateMatches/${currentEventCode}`));
-  await update(ref(db, `events/${currentEventCode}`), { status: "open" });
-  toast("Votos y matches reiniciados. La votación queda activa de nuevo.");
+  await update(ref(db, `events/${currentEventCode}`), {
+    status: "open",
+    roundStartedAt: now,
+    roundDurationMs: ROUND_DURATION_MS,
+    totalRounds: TOTAL_ROUNDS,
+    expiresAt: now + TOTAL_EVENT_DURATION_MS
+  });
+  toast("Rondas reiniciadas. La ronda 1 queda activa de nuevo.");
 });
 
 bind("deleteEvent", "click", async () => {
@@ -538,10 +965,12 @@ bind("deleteEvent", "click", async () => {
   if (!ok) return;
   const code = currentEventCode;
   await remove(ref(db, `privateMatches/${code}`));
+  await remove(ref(db, `chats/${code}`));
   await remove(ref(db, `eventSecrets/${code}`));
   await remove(ref(db, `adminSessions/${code}`));
   await remove(ref(db, `events/${code}`));
   localStorage.removeItem(adminStorageKey(code));
+  clearLastCreatorAccessIfMatches(code);
   toast("Evento eliminado.");
   stopListeners();
   show("home");
@@ -585,20 +1014,33 @@ function openEvent(code) {
 
   privateMatchUnsubscribe = onValue(ref(db, `privateMatches/${code}/${uid}`), (snap) => {
     const notices = snap.val() || {};
-    Object.entries(notices).forEach(([key, notice]) => showMatch(notice.withName, key));
+    knownPrivateMatches = notices;
+    renderMyMatches();
+    Object.entries(notices).forEach(([key, notice]) => {
+      if (!autoShownMatches.has(key)) {
+        autoShownMatches.add(key);
+        showMatch(notice.withName, key, notice.withUid, false);
+      }
+    });
   });
 
   adminSessionUnsubscribe = onValue(ref(db, `adminSessions/${code}/${uid}`), (snap) => {
     hasAdminAccess = Boolean(snap.val()?.active);
     if (currentEvent) renderEvent(currentEvent);
   });
+
+  if (roundTimerInterval) clearInterval(roundTimerInterval);
+  roundTimerInterval = setInterval(() => {
+    if (currentEvent) renderEvent(currentEvent);
+  }, 1000);
 }
 
 function statusText(event) {
-  if (eventIsExpired(event)) return `Caducado · caducidad: ${formatDate(event.expiresAt)}`;
-  if (event.status === "waiting") return `En espera · caduca: ${formatDate(event.expiresAt)}`;
-  if (event.status === "open") return `Votación abierta · caduca: ${formatDate(event.expiresAt)}`;
-  return `Cerrado · caducidad: ${formatDate(event.expiresAt)}`;
+  const round = getRoundInfo(event);
+  if (round.eventEnded || eventIsExpired(event)) return `Evento finalizado · 6/6 rondas completadas`;
+  if (event.status === "waiting") return `En espera · ronda ${round.currentRound}/${round.totalRounds}`;
+  if (event.status === "open") return `Ronda ${round.currentRound}/${round.totalRounds} abierta · quedan ${formatRemaining(round.msRemaining)}`;
+  return `Cerrado · ronda ${round.currentRound}/${round.totalRounds}`;
 }
 
 function renderEvent(event) {
@@ -606,30 +1048,437 @@ function renderEvent(event) {
   const canJoin = eventCanJoin(event);
   const isCreator = isAdmin(event);
   const participants = event.participants || {};
-  const votes = event.votes || {};
+  const round = getRoundInfo(event);
+  const allVotesByRound = event.votesByRound || {};
+  const votes = allVotesByRound[round.roundKey] || {};
   const myVote = votes[uid]?.targetUid;
   const votedCount = Object.keys(votes).length;
   const max = Number(event.maxParticipants || 0);
 
   $("currentTitle").textContent = event.name || "Evento";
   $("currentReason").textContent = event.reason || "";
+  applyTheme(event.theme || "dark");
+  if ($("currentTheme")) $("currentTheme").textContent = `Estilo: ${THEME_LABELS[normalizeTheme(event.theme)]}`;
   $("votesCount").textContent = votedCount;
   $("participantCount").textContent = max > 0 ? `${Object.keys(participants).length}/${max}` : Object.keys(participants).length;
   $("eventStatus").textContent = statusText(event);
+  renderRoundVisualizer(round);
+  handleRoundTransition(round);
+  if ($("roundProgress")) $("roundProgress").style.width = `${round.progress}%`;
 
   $("voteHelp").textContent = !canJoin
     ? "El evento está cerrado o caducado. Puedes ver el contador, pero no emitir nuevos votos."
     : event.status === "waiting"
       ? "La votación aún no está abierta."
       : myVote
-        ? "Voto registrado. Tu elección es privada y no puede cambiarse en esta ronda."
-        : "Tu voto es secreto. Solo se notificará si hay una elección mutua.";
+        ? `Voto registrado en la ronda ${round.currentRound}. En la siguiente ronda podrás votar de nuevo.`
+        : `Ronda ${round.currentRound}/${round.totalRounds}. Elige una tarjeta premium. Tu voto es secreto y se reinicia cada 7 minutos.`;
 
   renderAdminPanel(isCreator, event, participants, votes);
+  renderAnnouncements(event);
+  renderParticipantTools(participants);
   renderParticipants(participants, votes, canVote);
   renderMyVotesReceived(participants, votes);
+  renderPrivateHistory(participants, allVotesByRound, round);
   renderDistribution(participants, votes);
+  renderFinalResults(event, participants, allVotesByRound, round);
+  renderPublicScreen(event);
 }
+
+
+function countUniqueMatchesByRound(matchPairsByRound = {}) {
+  const pairs = new Set();
+  Object.entries(matchPairsByRound || {}).forEach(([roundKey, pairsObj]) => {
+    Object.keys(pairsObj || {}).forEach(pair => pairs.add(`${roundKey}_${pair}`));
+  });
+  return pairs.size;
+}
+
+function getAllVotesStats(event = {}, participants = {}) {
+  const allVotesByRound = event.votesByRound || {};
+  let totalVotes = 0;
+  let myReceived = 0;
+  let myVotesCast = 0;
+  Object.values(allVotesByRound).forEach(roundVotes => {
+    Object.entries(roundVotes || {}).forEach(([voterUid, vote]) => {
+      totalVotes += 1;
+      if (voterUid === uid) myVotesCast += 1;
+      if (vote?.targetUid === uid) myReceived += 1;
+    });
+  });
+  return {
+    totalVotes,
+    myReceived,
+    myVotesCast,
+    totalParticipants: Object.keys(participants || {}).length,
+    totalMatches: countUniqueMatchesByRound(event.matchPairsByRound || {})
+  };
+}
+
+function renderFinalResults(event = {}, participants = {}, allVotesByRound = {}, round = getRoundInfo(event)) {
+  const box = $("finalResultsBox");
+  const content = $("finalResultsContent");
+  if (!box || !content) return;
+
+  const ended = round.eventEnded || event.status === "closed" || eventIsExpired(event);
+  box.classList.toggle("hidden", !ended);
+  if (!ended) return;
+
+  const stats = getAllVotesStats(event, participants);
+  const amParticipant = Boolean(participants?.[uid]);
+  const personalBlock = amParticipant
+    ? `<div class="finalPersonal"><strong>Tu resumen privado</strong><p class="muted">Has emitido ${stats.myVotesCast} ${stats.myVotesCast === 1 ? "voto" : "votos"} y has recibido ${stats.myReceived} ${stats.myReceived === 1 ? "voto" : "votos"} durante el evento.</p></div>`
+    : "";
+
+  content.innerHTML = `
+    <div class="finalGrid">
+      <article class="finalCard"><span>${round.totalRounds || TOTAL_ROUNDS}</span><small>rondas completadas</small></article>
+      <article class="finalCard"><span>${stats.totalParticipants}</span><small>participantes</small></article>
+      <article class="finalCard"><span>${stats.totalVotes}</span><small>votos emitidos</small></article>
+      <article class="finalCard"><span>${stats.totalMatches}</span><small>matches encontrados</small></article>
+    </div>
+    ${personalBlock}
+    <p class="muted">Resumen seguro: no se muestran nombres asociados a votos ni elecciones individuales.</p>
+  `;
+}
+
+function renderPublicScreen(event = {}) {
+  const screen = $("publicScreen");
+  if (!screen || screen.classList.contains("hidden")) return;
+
+  const participants = event.participants || {};
+  const round = getRoundInfo(event);
+  const votes = (event.votesByRound || {})[round.roundKey] || {};
+  const stats = getAllVotesStats(event, participants);
+
+  $("publicRound").textContent = round.eventEnded ? "Evento finalizado" : `Ronda ${round.currentRound} de ${round.totalRounds}`;
+  $("publicTimer").textContent = round.eventEnded ? "00:00" : formatRemaining(round.msRemaining);
+  $("publicParticipants").textContent = String(Object.keys(participants).length);
+  $("publicVotes").textContent = String(Object.keys(votes).length);
+  $("publicMatches").textContent = String(stats.totalMatches);
+  if ($("publicProgress")) $("publicProgress").style.width = `${round.progress}%`;
+}
+
+
+async function imageToDataUrl(url) {
+  const response = await fetch(url, { cache: "force-cache" });
+  const blob = await response.blob();
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function stickerThemeColors(theme = "dark") {
+  const selected = normalizeTheme(theme);
+  const palettes = {
+    dark: { top: [45, 17, 48], accent: [202, 96, 124], text: [34, 18, 42], soft: [242, 231, 237] },
+    passion: { top: [95, 4, 24], accent: [255, 37, 95], text: [55, 4, 18], soft: [255, 235, 239] },
+    white: { top: [255, 255, 255], accent: [141, 47, 83], text: [33, 25, 37], soft: [246, 240, 233] },
+    night: { top: [8, 12, 35], accent: [0, 212, 255], text: [6, 9, 26], soft: [232, 241, 255] },
+    gold: { top: [38, 27, 12], accent: [216, 166, 61], text: [35, 22, 8], soft: [255, 247, 229] }
+  };
+  return palettes[selected] || palettes.dark;
+}
+
+function splitNameForSticker(name = "") {
+  const clean = cleanName(name || "INVITADO");
+  if (clean.length <= 13) return [clean.toUpperCase()];
+  const words = clean.toUpperCase().split(" ");
+  const lines = [];
+  let current = "";
+  words.forEach(word => {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > 13 && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  });
+  if (current) lines.push(current);
+  return lines.slice(0, 2);
+}
+
+function drawSticker(pdf, x, y, w, h, name, logoDataUrl, event = currentEvent) {
+  const colors = stickerThemeColors(event?.theme || "dark");
+  const r = 4;
+  pdf.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+  pdf.setLineWidth(0.45);
+  pdf.roundedRect(x, y, w, h, r, r, "S");
+
+  // Top dark/colored band
+  pdf.setFillColor(colors.top[0], colors.top[1], colors.top[2]);
+  pdf.roundedRect(x, y, w, h * 0.30, r, r, "F");
+  pdf.setFillColor(colors.top[0], colors.top[1], colors.top[2]);
+  pdf.rect(x, y + h * 0.20, w, h * 0.11, "F");
+
+  // Accent separator
+  pdf.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+  pdf.setLineWidth(0.9);
+  pdf.line(x + 4, y + h * 0.31, x + w - 4, y + h * 0.31);
+
+  // Logo
+  try {
+    const logoSize = h * 0.20;
+    pdf.addImage(logoDataUrl, "PNG", x + (w - logoSize) / 2, y + 3, logoSize, logoSize);
+  } catch (error) {
+    // If image fails, continue with text logo.
+  }
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(10);
+  pdf.text("sixseven", x + w / 2, y + h * 0.27, { align: "center" });
+
+  // Main body
+  pdf.setTextColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.text("HOLA, SOY", x + w / 2, y + h * 0.43, { align: "center" });
+
+  const lines = splitNameForSticker(name);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.setFont("helvetica", "bold");
+  const fontSize = lines.length > 1 ? 22 : (lines[0].length > 10 ? 24 : 30);
+  pdf.setFontSize(fontSize);
+  const lineStart = lines.length > 1 ? y + h * 0.58 : y + h * 0.63;
+  lines.forEach((line, index) => {
+    pdf.text(line, x + w / 2, lineStart + index * 9, { align: "center" });
+  });
+
+  // Decorative x and footer
+  pdf.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+  pdf.setLineWidth(0.35);
+  pdf.line(x + 13, y + h * 0.78, x + w * 0.44, y + h * 0.78);
+  pdf.line(x + w * 0.56, y + h * 0.78, x + w - 13, y + h * 0.78);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(12);
+  pdf.setTextColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+  pdf.text("x", x + w / 2, y + h * 0.80, { align: "center" });
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text("sixseven · conexión privada", x + w / 2, y + h * 0.91, { align: "center" });
+
+  // Cut guides
+  pdf.setDrawColor(185, 185, 185);
+  pdf.setLineWidth(0.15);
+  pdf.line(x - 2, y, x - 0.5, y);
+  pdf.line(x, y - 2, x, y - 0.5);
+  pdf.line(x + w + 0.5, y, x + w + 2, y);
+  pdf.line(x + w, y - 2, x + w, y - 0.5);
+  pdf.line(x - 2, y + h, x - 0.5, y + h);
+  pdf.line(x, y + h + 0.5, x, y + h + 2);
+  pdf.line(x + w + 0.5, y + h, x + w + 2, y + h);
+  pdf.line(x + w, y + h + 0.5, x + w, y + h + 2);
+}
+
+async function generateStickersPdf() {
+  if (!window.jspdf?.jsPDF) {
+    toast("No se pudo cargar la librería PDF. Revisa tu conexión e inténtalo de nuevo.");
+    return;
+  }
+
+  const participants = Object.values(currentEvent?.participants || {})
+    .map(p => cleanName(p?.name || ""))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+
+  if (!participants.length) {
+    toast("Aún no hay participantes para generar pegatinas.");
+    return;
+  }
+
+  try {
+    toast("Generando PDF de pegatinas...");
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const logoDataUrl = await imageToDataUrl("./assets/sixseven-logo.png");
+
+    const pageW = 210;
+    const pageH = 297;
+    const marginX = 12;
+    const marginY = 12;
+    const gapX = 6;
+    const gapY = 7;
+    const cols = 2;
+    const rows = 4;
+    const stickerW = (pageW - marginX * 2 - gapX) / cols;
+    const stickerH = (pageH - marginY * 2 - gapY * (rows - 1)) / rows;
+    const perPage = cols * rows;
+
+    participants.forEach((name, index) => {
+      if (index > 0 && index % perPage === 0) pdf.addPage();
+      const local = index % perPage;
+      const col = local % cols;
+      const row = Math.floor(local / cols);
+      const x = marginX + col * (stickerW + gapX);
+      const y = marginY + row * (stickerH + gapY);
+      drawSticker(pdf, x, y, stickerW, stickerH, name, logoDataUrl, currentEvent);
+    });
+
+    const safeName = (currentEvent?.name || "sixseven")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase()
+      .slice(0, 40) || "sixseven";
+
+    pdf.save(`pegatinas-${safeName}-${currentEventCode}.pdf`);
+    toast("PDF de pegatinas generado.");
+  } catch (error) {
+    console.error("Error generando PDF de pegatinas:", error);
+    toast("No se pudo generar el PDF de pegatinas.");
+  }
+}
+
+
+function renderAnnouncements(event = {}) {
+  const box = $("announcementsBox");
+  const list = $("announcementsList");
+  if (!box || !list) return;
+  const entries = Object.entries(event.announcements || {})
+    .map(([id, item]) => ({ id, ...item }))
+    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+    .slice(0, 5);
+
+  box.classList.toggle("hidden", entries.length === 0);
+  list.innerHTML = "";
+  entries.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "announcementItem";
+    row.innerHTML = `<strong>${formatDate(item.createdAt || Date.now())}</strong><p>${escapeHtml(item.text || "")}</p>`;
+    list.appendChild(row);
+  });
+}
+
+function renderParticipantTools(participants = {}) {
+  const box = $("participantToolsBox");
+  if (!box) return;
+  box.classList.toggle("hidden", !participants?.[uid] || isAdmin());
+}
+
+async function deleteMyParticipation() {
+  if (!currentEventCode || !currentEvent || !uid) return;
+  const participant = currentEvent.participants?.[uid];
+  if (!participant) return toast("No estás registrado como participante en este evento.");
+  const ok = confirm("¿Quieres salir y borrar tu participación? Se eliminarán tu alias, votos emitidos, votos asociados y chats de match relacionados.");
+  if (!ok) return;
+
+  try {
+    const updates = {};
+    updates[`events/${currentEventCode}/participants/${uid}`] = null;
+    if (participant.normalizedName) {
+      updates[`events/${currentEventCode}/nameIndex/${participant.normalizedName}`] = null;
+    }
+    updates[`privateMatches/${currentEventCode}/${uid}`] = null;
+
+    Object.entries(currentEvent.votesByRound || {}).forEach(([roundKey, roundVotes]) => {
+      updates[`events/${currentEventCode}/votesByRound/${roundKey}/${uid}`] = null;
+      Object.entries(roundVotes || {}).forEach(([voterUid, vote]) => {
+        if (vote?.targetUid === uid) {
+          updates[`events/${currentEventCode}/votesByRound/${roundKey}/${voterUid}`] = null;
+        }
+      });
+    });
+
+    Object.entries(knownPrivateMatches || {}).forEach(([matchKey]) => {
+      updates[`chats/${currentEventCode}/${matchKey}`] = null;
+    });
+
+    Object.entries(currentEvent.participants || {}).forEach(([otherUid]) => {
+      if (otherUid === uid) return;
+      const pair = pairKey(uid, otherUid);
+      for (let round = 1; round <= TOTAL_ROUNDS; round += 1) {
+        const matchKey = `${round}_${pair}`;
+        updates[`events/${currentEventCode}/matchPairsByRound/${round}/${pair}`] = null;
+        updates[`privateMatches/${currentEventCode}/${otherUid}/${matchKey}`] = null;
+        updates[`chats/${currentEventCode}/${matchKey}`] = null;
+      }
+    });
+
+    await update(ref(db), updates);
+    toast("Tu participación se ha borrado.");
+    stopListeners();
+    show("home");
+  } catch (error) {
+    console.error("Error borrando participación:", error);
+    toast("No se pudo borrar la participación. Revisa las reglas de Firebase.");
+  }
+}
+
+async function qrDataUrlForEvent(code) {
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=800x800&data=${encodeURIComponent(buildInviteUrl(code))}`;
+  return await imageToDataUrl(url);
+}
+
+async function generatePosterPdf() {
+  if (!window.jspdf?.jsPDF) {
+    toast("No se pudo cargar la librería PDF. Revisa tu conexión.");
+    return;
+  }
+
+  try {
+    toast("Generando cartel PDF con QR...");
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const logoDataUrl = await imageToDataUrl("./assets/sixseven-logo.png");
+    const qrDataUrl = await qrDataUrlForEvent(currentEventCode);
+    const colors = stickerThemeColors(currentEvent?.theme || "dark");
+
+    pdf.setFillColor(colors.top[0], colors.top[1], colors.top[2]);
+    pdf.rect(0, 0, 210, 297, "F");
+
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(18, 18, 174, 261, 8, 8, "F");
+
+    pdf.addImage(logoDataUrl, "PNG", 78, 26, 54, 54);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+    pdf.setFontSize(24);
+    pdf.text("sixseven", 105, 90, { align: "center" });
+
+    pdf.setFontSize(18);
+    pdf.text(currentEvent?.name || "Evento privado", 105, 108, { align: "center", maxWidth: 150 });
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(12);
+    pdf.setTextColor(90, 82, 96);
+    pdf.text(`Tipo de conexión: ${currentEvent?.reason || "Privado"}`, 105, 120, { align: "center" });
+    pdf.text("6 rondas de 7 minutos · voto privado · match mutuo", 105, 128, { align: "center" });
+
+    pdf.addImage(qrDataUrl, "PNG", 60, 140, 90, 90);
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+    pdf.setFontSize(18);
+    pdf.text(`Código: ${currentEventCode}`, 105, 244, { align: "center" });
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(90, 82, 96);
+    pdf.text("Escanea el QR para participar. Solo para personas adultas y con consentimiento.", 105, 258, { align: "center", maxWidth: 150 });
+    pdf.text(buildInviteUrl(currentEventCode), 105, 266, { align: "center", maxWidth: 150 });
+
+    const safeName = (currentEvent?.name || "sixseven")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .toLowerCase()
+      .slice(0, 40) || "sixseven";
+
+    pdf.save(`cartel-${safeName}-${currentEventCode}.pdf`);
+    toast("Cartel PDF generado.");
+  } catch (error) {
+    console.error("Error generando cartel:", error);
+    toast("No se pudo generar el cartel PDF.");
+  }
+}
+
 
 function renderAdminPanel(isCreator, event, participants = {}, votes = {}) {
   const panel = $("adminPanel");
@@ -651,9 +1500,15 @@ function renderAdminPanel(isCreator, event, participants = {}, votes = {}) {
 
 function populateAdminSettings(event) {
   if ($("adminEventName") && document.activeElement !== $("adminEventName")) $("adminEventName").value = event.name || "";
-  if ($("adminEventReason") && VALID_REASONS.includes(event.reason)) $("adminEventReason").value = event.reason;
+  if ($("adminEventReason")) {
+    $("adminEventReason").value = VALID_REASONS.includes(event.reason) ? event.reason : "__custom__";
+    syncCustomReason("adminEventReason", "adminEventReasonCustom", event.reason || "");
+  }
+  if ($("adminEventTheme")) $("adminEventTheme").value = normalizeTheme(event.theme || "dark");
   if ($("adminMaxParticipants")) $("adminMaxParticipants").value = String(Number(event.maxParticipants || 0));
+  if ($("adminCloseEntryRound2")) $("adminCloseEntryRound2").checked = Boolean(event.closeEntryRound2);
   if ($("adminSoundEnabled")) $("adminSoundEnabled").checked = Boolean(event.soundEnabled);
+  if ($("adminRecoveryQuestion") && document.activeElement !== $("adminRecoveryQuestion")) $("adminRecoveryQuestion").value = event.recoveryQuestion || "";
 }
 
 function renderAdminParticipants(participants = {}, votes = {}) {
@@ -686,15 +1541,21 @@ async function removeParticipant(participantUid, participantName) {
   try {
     const updates = {};
     updates[`events/${currentEventCode}/participants/${participantUid}`] = null;
-    updates[`events/${currentEventCode}/votes/${participantUid}`] = null;
     updates[`privateMatches/${currentEventCode}/${participantUid}`] = null;
-    Object.entries(currentEvent?.votes || {}).forEach(([voterUid, vote]) => {
-      if (vote?.targetUid === participantUid) updates[`events/${currentEventCode}/votes/${voterUid}`] = null;
+    Object.entries(currentEvent?.votesByRound || {}).forEach(([roundKey, roundVotes]) => {
+      updates[`events/${currentEventCode}/votesByRound/${roundKey}/${participantUid}`] = null;
+      Object.entries(roundVotes || {}).forEach(([voterUid, vote]) => {
+        if (vote?.targetUid === participantUid) updates[`events/${currentEventCode}/votesByRound/${roundKey}/${voterUid}`] = null;
+      });
     });
     Object.entries(currentEvent?.participants || {}).forEach(([otherUid]) => {
-      const key = pairKey(otherUid, participantUid);
-      updates[`events/${currentEventCode}/matchPairs/${key}`] = null;
-      updates[`privateMatches/${currentEventCode}/${otherUid}/${key}`] = null;
+      const pair = pairKey(otherUid, participantUid);
+      for (let round = 1; round <= TOTAL_ROUNDS; round += 1) {
+        const key = `${round}_${pair}`;
+        updates[`events/${currentEventCode}/matchPairsByRound/${round}/${pair}`] = null;
+        updates[`privateMatches/${currentEventCode}/${otherUid}/${key}`] = null;
+        updates[`chats/${currentEventCode}/${key}`] = null;
+      }
     });
     if (participantUid && currentEvent?.participants?.[participantUid]?.normalizedName) {
       updates[`events/${currentEventCode}/nameIndex/${currentEvent.participants[participantUid].normalizedName}`] = null;
@@ -719,9 +1580,16 @@ function renderParticipants(participants, votes, canVote) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = `btn person ${myVote === participantUid ? "selected" : ""}`;
-      btn.textContent = participant.name || "Participante";
       btn.title = participant.name || "Participante";
       btn.disabled = Boolean(myVote) || !canVote;
+      btn.innerHTML = `
+        <span class="personAvatar"><img src="./assets/icon-user.svg" alt="" /></span>
+        <span class="personBody">
+          <strong class="personName">${escapeHtml(participant.name || "Participante")}</strong>
+          <small class="personMeta">${escapeHtml(participantCardMeta(participantUid, myVote, canVote))}</small>
+        </span>
+        <span class="personAction">${myVote === participantUid ? "Elegida" : (canVote && !myVote ? "Elegir" : "Privado")}</span>
+      `;
       btn.addEventListener("click", () => vote(participantUid, participant.name || "Participante", participants));
       container.appendChild(btn);
     });
@@ -737,7 +1605,9 @@ async function vote(targetUid, targetName, participants) {
   if (!eventCanVote(currentEvent)) return toast("La votación no está abierta.");
   if (targetUid === uid) return toast("No puedes votarte a ti mismo.");
 
-  const myVoteRef = ref(db, `events/${currentEventCode}/votes/${uid}`);
+  const round = getRoundInfo(currentEvent);
+  if (round.eventEnded) return toast("El evento ha terminado tras completar las 6 rondas.");
+  const myVoteRef = ref(db, `events/${currentEventCode}/votesByRound/${round.roundKey}/${uid}`);
   const existing = await get(myVoteRef);
   if (existing.exists()) return toast("Ya has votado. Solo se permite un voto por ronda.");
 
@@ -748,9 +1618,9 @@ async function vote(targetUid, targetName, participants) {
     });
     toast("Voto registrado. Te avisaremos si hay coincidencia mutua.");
 
-    const reciprocal = await get(ref(db, `events/${currentEventCode}/votes/${targetUid}`));
+    const reciprocal = await get(ref(db, `events/${currentEventCode}/votesByRound/${round.roundKey}/${targetUid}`));
     if (reciprocal.exists() && reciprocal.val().targetUid === uid) {
-      await createPrivateMatchNotice(targetUid, targetName, participants);
+      await createPrivateMatchNotice(targetUid, targetName, participants, round.roundKey);
     }
   } catch (error) {
     console.error("Error votando:", error);
@@ -758,9 +1628,10 @@ async function vote(targetUid, targetName, participants) {
   }
 }
 
-async function createPrivateMatchNotice(targetUid, targetName, participants) {
-  const key = pairKey(uid, targetUid);
-  const pairRef = ref(db, `events/${currentEventCode}/matchPairs/${key}`);
+async function createPrivateMatchNotice(targetUid, targetName, participants, roundKey = "1") {
+  const pair = pairKey(uid, targetUid);
+  const key = `${roundKey}_${pair}`;
+  const pairRef = ref(db, `events/${currentEventCode}/matchPairsByRound/${roundKey}/${pair}`);
   const tx = await runTransaction(pairRef, currentValue => currentValue || true);
   if (!tx.committed) return;
 
@@ -768,13 +1639,21 @@ async function createPrivateMatchNotice(targetUid, targetName, participants) {
     [`privateMatches/${currentEventCode}/${uid}/${key}`]: {
       withUid: targetUid,
       withName: targetName,
+      round: roundKey,
       createdAt: serverTimestamp()
     },
     [`privateMatches/${currentEventCode}/${targetUid}/${key}`]: {
       withUid: uid,
       withName: currentParticipantName || participants?.[uid]?.name || "otra persona",
+      round: roundKey,
       createdAt: serverTimestamp()
-    }
+    },
+    [`chats/${currentEventCode}/${key}/members/${uid}`]: true,
+    [`chats/${currentEventCode}/${key}/members/${targetUid}`]: true,
+    [`chats/${currentEventCode}/${key}/memberNames/${uid}`]: currentParticipantName || participants?.[uid]?.name || "Yo",
+    [`chats/${currentEventCode}/${key}/memberNames/${targetUid}`]: targetName,
+    [`chats/${currentEventCode}/${key}/round`]: roundKey,
+    [`chats/${currentEventCode}/${key}/createdAt`]: serverTimestamp()
   });
 }
 
@@ -802,6 +1681,40 @@ function renderMyVotesReceived(participants, votes) {
     ? "Has recibido 1 voto. Solo tú ves este contador personal en tu pantalla."
     : `Has recibido ${received} votos. Solo tú ves este contador personal en tu pantalla.`;
 }
+
+
+function renderPrivateHistory(participants = {}, allVotesByRound = {}, round = getRoundInfo(currentEvent)) {
+  const box = $("privateHistoryBox");
+  const list = $("privateHistoryList");
+  if (!box || !list) return;
+
+  const amParticipant = Boolean(participants?.[uid]);
+  box.classList.toggle("hidden", !amParticipant);
+  if (!amParticipant) {
+    list.innerHTML = "";
+    return;
+  }
+
+  list.innerHTML = "";
+  for (let i = 1; i <= TOTAL_ROUNDS; i += 1) {
+    const roundVotes = allVotesByRound?.[String(i)] || {};
+    const vote = roundVotes?.[uid];
+    const isCurrent = i === Number(round.currentRound) && !round.eventEnded;
+    const done = Boolean(vote?.targetUid);
+    const item = document.createElement("div");
+    item.className = "historyRound";
+    item.innerHTML = `
+      <div class="historyRoundNumber">${i}</div>
+      <div>
+        <strong>Ronda ${i}${isCurrent ? " · actual" : ""}</strong>
+        <small>${done ? "Has votado en esta ronda." : i < Number(round.currentRound) || round.eventEnded ? "No consta voto en esta ronda." : "Pendiente."}</small>
+      </div>
+      <span class="historyBadge ${done ? "done" : "pending"}">${done ? "Votada" : "Sin voto"}</span>
+    `;
+    list.appendChild(item);
+  }
+}
+
 
 function renderDistribution(participants, votes) {
   const countsByPerson = {};
@@ -834,25 +1747,167 @@ function renderDistribution(participants, votes) {
   });
 }
 
-function showMatch(withName, matchKey = "") {
+function safeMessageText(value = "") {
+  return String(value)
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, 500);
+}
+
+function chatMessageKey() {
+  return `${Date.now()}_${uid || "anon"}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function renderChatMessages(messages = {}, withName = "") {
+  const list = $("matchChatMessages");
+  if (!list) return;
+  const entries = Object.entries(messages || {})
+    .map(([id, msg]) => ({ id, ...msg }))
+    .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
+
+  if (!entries.length) {
+    list.innerHTML = `<p class="muted chatEmpty">Aún no hay mensajes. Puedes empezar con un saludo discreto.</p>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  entries.forEach(msg => {
+    const mine = msg.senderUid === uid;
+    const row = document.createElement("div");
+    row.className = `chatMessage ${mine ? "mine" : "theirs"}`;
+    row.innerHTML = `
+      <div class="chatBubble">
+        <small>${mine ? "Tú" : escapeHtml(withName || "Match")}</small>
+        <p>${escapeHtml(msg.text || "")}</p>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+  list.scrollTop = list.scrollHeight;
+}
+
+function subscribeToMatchChat(matchKey = "", withName = "") {
+  if (activeChatUnsubscribe) activeChatUnsubscribe();
+  activeChatUnsubscribe = null;
+  if (!currentEventCode || !matchKey || !uid) return;
+
+  activeChatUnsubscribe = onValue(ref(db, `chats/${currentEventCode}/${matchKey}/messages`), (snap) => {
+    renderChatMessages(snap.val() || {}, withName);
+  });
+}
+
+async function sendMatchChatMessage(matchKey = "") {
+  const input = $("matchChatInput");
+  const text = safeMessageText(input?.value || "");
+  if (!currentEventCode || !matchKey || !uid) return;
+  if (!text) return toast("Escribe un mensaje antes de enviar.");
+
+  try {
+    const msgKey = chatMessageKey();
+    await set(ref(db, `chats/${currentEventCode}/${matchKey}/messages/${msgKey}`), {
+      senderUid: uid,
+      senderName: currentParticipantName || currentEvent?.participants?.[uid]?.name || "Yo",
+      text,
+      createdAt: Date.now()
+    });
+    input.value = "";
+  } catch (error) {
+    console.error("Error enviando mensaje privado:", error);
+    toast("No se pudo enviar el mensaje. Revisa las reglas de Firebase.");
+  }
+}
+
+
+function renderMyMatches() {
+  const box = $("myMatchesBox");
+  const list = $("myMatchesList");
+  if (!box || !list) return;
+
+  const entries = Object.entries(knownPrivateMatches || {})
+    .filter(([, notice]) => notice?.withName)
+    .sort(([, a], [, b]) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+
+  box.classList.toggle("hidden", entries.length === 0);
+  list.innerHTML = "";
+
+  if (!entries.length) return;
+
+  entries.forEach(([matchKey, notice]) => {
+    const item = document.createElement("div");
+    item.className = "matchListItem";
+    const roundText = notice.round ? `Ronda ${notice.round}` : "Match privado";
+    item.innerHTML = `
+      <span>
+        <strong>${escapeHtml(notice.withName || "Match")}</strong>
+        <small>${escapeHtml(roundText)} · chat privado disponible</small>
+      </span>
+      <button type="button" class="btn secondary small">Abrir chat</button>
+    `;
+    item.querySelector("button")?.addEventListener("click", () => {
+      showMatch(notice.withName, matchKey, notice.withUid, true);
+    });
+    list.appendChild(item);
+  });
+}
+
+
+function showMatch(withName, matchKey = "", withUid = "", reopened = false) {
   if (!withName) return;
   const box = $("matchAlert");
   box.classList.remove("hidden");
   box.innerHTML = `
-    <h3>✨ Match privado</h3>
+    <h3>${reopened ? "💬 Chat privado" : "✨ Match privado"}</h3>
     <p>Tú y <strong>${escapeHtml(withName)}</strong> os habéis elegido mutuamente.</p>
-    <p>Solo las dos personas implicadas reciben este aviso.</p>
+    <p>Ahora podéis usar este chat privado. Solo las dos personas del match pueden leer y escribir aquí.</p>
+
+    <div class="matchChat" aria-label="Chat privado del match">
+      <div id="matchChatMessages" class="matchChatMessages">
+        <p class="muted chatEmpty">Cargando chat privado...</p>
+      </div>
+      <div class="quickReactions">
+        <button type="button" class="btn ghost quickReaction" data-message="👋 Hola, me alegra el match.">👋 Hola</button>
+        <button type="button" class="btn ghost quickReaction" data-message="☕ ¿Tomamos algo?">☕ ¿Tomamos algo?</button>
+        <button type="button" class="btn ghost quickReaction" data-message="😊 Me alegra el match.">😊 Me alegra</button>
+      </div>
+      <div class="matchChatForm">
+        <input id="matchChatInput" type="text" maxlength="500" placeholder="Escribe un mensaje privado..." autocomplete="off" />
+        <button id="sendMatchChat" class="btn primary small" type="button">Enviar</button>
+      </div>
+      <p class="muted chatPrivacy">Chat privado entre las dos personas del match. Mensajes visibles solo dentro de este evento.</p>
+    </div>
+
     <div class="match-actions">
       <button id="closeMatch" class="btn secondary" type="button">Cerrar</button>
-      ${matchKey ? `<button id="ackMatch" class="btn ghost" type="button">No volver a mostrar</button>` : ""}
+      ${matchKey ? `<button id="ackMatch" class="btn ghost" type="button">Cerrar y mantener chat</button>` : ""}
     </div>
   `;
-  $("closeMatch")?.addEventListener("click", () => box.classList.add("hidden"));
-  $("ackMatch")?.addEventListener("click", async () => {
-    if (currentEventCode && uid && matchKey) {
-      await remove(ref(db, `privateMatches/${currentEventCode}/${uid}/${matchKey}`));
-    }
+
+  subscribeToMatchChat(matchKey, withName);
+
+  document.querySelectorAll(".quickReaction").forEach(button => {
+    button.addEventListener("click", () => {
+      const input = $("matchChatInput");
+      if (input) input.value = button.dataset.message || "";
+      sendMatchChatMessage(matchKey);
+    });
+  });
+  $("sendMatchChat")?.addEventListener("click", () => sendMatchChatMessage(matchKey));
+  $("matchChatInput")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") sendMatchChatMessage(matchKey);
+  });
+
+  $("closeMatch")?.addEventListener("click", () => {
     box.classList.add("hidden");
+    if (activeChatUnsubscribe) activeChatUnsubscribe();
+    activeChatUnsubscribe = null;
+    toast("Chat cerrado. Puedes reabrirlo desde “Tus matches”.");
+  });
+
+  $("ackMatch")?.addEventListener("click", () => {
+    box.classList.add("hidden");
+    if (activeChatUnsubscribe) activeChatUnsubscribe();
+    activeChatUnsubscribe = null;
+    toast("Chat cerrado. Puedes reabrirlo desde “Tus matches”.");
   });
 
   if (currentEvent?.soundEnabled) {

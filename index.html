@@ -7,49 +7,67 @@
   <title>sixseven · Eventos privados</title>
   <meta name="description" content="sixseven: eventos privados con votación anónima y aviso de match mutuo." />
   <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="./assets/sixseven-logo.png" />
+  <link rel="apple-touch-icon" href="./assets/sixseven-logo.png" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
+
+  <div id="splashScreen" class="splashScreen" aria-label="Cargando sixseven">
+    <div class="splashLogoWrap">
+      <img class="splashLogo" src="./assets/sixseven-logo.png" alt="sixseven" />
+      <div class="splashPulse"></div>
+    </div>
+    <p class="splashBrand">sixseven</p>
+    <p class="splashTagline">Conexiones reales. Decisiones privadas.</p>
+  </div>
   <main class="app-shell">
     <section id="home" class="view active hero-view" aria-labelledby="homeTitle">
       <div class="ambient ambient-one"></div>
       <div class="ambient ambient-two"></div>
 
-      <div class="home-card glass-card">
-        <div class="brand-row">
-          <div class="brand-mark">67</div>
-          <div>
-            <p class="eyebrow">eventos privados · votos secretos · coincidencias reales</p>
-            <div class="brand">sixseven</div>
-          </div>
+      
+      <div class="home-card glass-card home-card-clean">
+        <div class="brand-hero">
+          <img class="brand-logo brand-logo-hero" src="./assets/sixseven-logo.png" alt="Logo de sixseven" />
+          <p class="eyebrow">eventos privados · votación secreta</p>
+          <div class="brand">sixseven</div>
         </div>
 
-        <h1 id="homeTitle">Conexiones reales. Decisiones privadas.</h1>
-        <p class="lead">
-          Crea una sala privada, comparte el código y deja que cada persona elija en secreto.
-          Solo se revela una conexión cuando dos personas se eligen mutuamente.
-        </p>
-
-        <div class="trust-strip" aria-label="Principios de privacidad">
-          <span>Voto anónimo</span>
-          <span>Match privado</span>
-          <span>Evento temporal</span>
-        </div>
+        <h1 id="homeTitle">Conecta de forma elegante y privada.</h1>
+        <p class="lead">Crea una sala, comparte un código y deja que las coincidencias hablen por sí solas.</p>
 
         <div class="actions main-actions">
-          <button id="showCreate" type="button" class="btn primary xl">Crear un evento privado</button>
+          <button id="showCreate" type="button" class="btn primary xl">Crear evento</button>
           <button id="showJoin" type="button" class="btn secondary xl">Entrar con código</button>
         </div>
 
-        <section class="how-card" aria-labelledby="howTitle">
-          <h2 id="howTitle">Cómo funciona</h2>
-          <div class="steps">
-            <article><strong>1</strong><span>Entras con nombre o alias.</span></article>
-            <article><strong>2</strong><span>Eliges solo a una persona.</span></article>
-            <article><strong>3</strong><span>Tu voto queda oculto.</span></article>
-            <article><strong>4</strong><span>Si hay elección mutua, hay match.</span></article>
-          </div>
+        <section class="featureGrid" aria-label="Características principales">
+          <article class="featureCard">
+            <img class="featureIcon" src="./assets/icon-privacy.svg" alt="Privacidad" />
+            <strong>Voto privado</strong>
+            <span>Solo se revela una coincidencia mutua.</span>
+          </article>
+          <article class="featureCard">
+            <img class="featureIcon" src="./assets/icon-rounds.svg" alt="Rondas" />
+            <strong>Modo 6×7</strong>
+            <span>Seis rondas de siete minutos.</span>
+          </article>
+          <article class="featureCard">
+            <img class="featureIcon" src="./assets/icon-match.svg" alt="Match" />
+            <strong>Match privado</strong>
+            <span>Aviso discreto y chat entre dos personas.</span>
+          </article>
+          <article class="featureCard">
+            <img class="featureIcon" src="./assets/icon-creator.svg" alt="Creador" />
+            <strong>Control del creador</strong>
+            <span>QR, pegatinas, avisos y panel premium.</span>
+          </article>
         </section>
+
+        <p class="legalNote legalMini">Solo para personas adultas, con consentimiento y en eventos privados.</p>
+      </div>
+    </section>
 
         <p class="legalNote">
           Uso recomendado exclusivamente para personas adultas, en eventos privados y con consentimiento de quienes participan.
@@ -60,6 +78,13 @@
     <section id="createView" class="view page-view" aria-labelledby="createTitle">
       <div class="panel glass-card">
         <button class="link" type="button" data-back>← Volver</button>
+        <div class="mini-brand">
+          <img class="mini-brand-logo" src="./assets/sixseven-logo.png" alt="Logo de sixseven" />
+          <div>
+            <div class="mini-brand-name">sixseven</div>
+            <p class="mini-brand-tag">eventos privados · conexiones reales</p>
+          </div>
+        </div>
         <p class="eyebrow">crear sala privada</p>
         <h2 id="createTitle">Configura el evento</h2>
         <p class="section-intro">La votación se abrirá automáticamente al crear el evento. Guarda la clave de creador para volver a administrar la sala más tarde.</p>
@@ -71,10 +96,26 @@
 
           <label>Tipo de conexión
             <select id="eventReason">
-              <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
+              <option value="Una conversación">💬 Una conversación</option>
               <option value="Un café">☕ Un café</option>
+              <option value="Una copa">🍸 Una copa</option>
+              <option value="Un baile">🎵 Un baile</option>
               <option value="Una cena">🍷 Una cena</option>
+              <option value="Una cita">✨ Una cita</option>
+              <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
               <option value="Una noche">🌙 Una noche</option>
+              <option value="__custom__">✍️ Personalizada</option>
+            </select>
+            <input id="eventReasonCustom" class="hidden" type="text" placeholder="Escribe tu tipo de conexión" maxlength="40" autocomplete="off" />
+          </label>
+
+          <label>Estilo visual del evento
+            <select id="eventTheme">
+              <option value="dark">Elegante oscuro</option>
+              <option value="passion">Rojo pasión</option>
+              <option value="white">Minimal blanco</option>
+              <option value="night">Fiesta nocturna</option>
+              <option value="gold">Premium dorado</option>
             </select>
           </label>
 
@@ -97,6 +138,11 @@
               <option value="12">12 personas</option>
               <option value="0">Sin límite</option>
             </select>
+          </label>
+
+          <label class="switch-row">
+            <input id="closeEntryRound2" type="checkbox" checked />
+            <span>Cerrar la entrada automáticamente al empezar la ronda 2</span>
           </label>
 
           <label>Clave de creador
@@ -122,6 +168,13 @@
     <section id="joinView" class="view page-view" aria-labelledby="joinTitle">
       <div class="panel glass-card">
         <button class="link" type="button" data-back>← Volver</button>
+        <div class="mini-brand">
+          <img class="mini-brand-logo" src="./assets/sixseven-logo.png" alt="Logo de sixseven" />
+          <div>
+            <div class="mini-brand-name">sixseven</div>
+            <p class="mini-brand-tag">eventos privados · conexiones reales</p>
+          </div>
+        </div>
         <p class="eyebrow">acceso privado</p>
         <h2 id="joinTitle">Entrar en un evento</h2>
         <p class="section-intro">Tu elección será secreta. Solo se avisará si la otra persona también te elige.</p>
@@ -144,6 +197,15 @@
 
         <button id="joinEvent" type="button" class="btn primary full">Entrar al evento</button>
         <p id="joinError" class="error" aria-live="polite"></p>
+
+
+        <div id="lastCreatorBox" class="creatorAccessBox hidden">
+          <h3>Último evento creado en este dispositivo</h3>
+          <p class="muted">Si creaste un evento desde este navegador, puedes recuperar el acceso sin volver a escribir la clave.</p>
+          <div id="lastCreatorInfo" class="savedAccessInfo"></div>
+          <button id="recoverLastCreator" type="button" class="btn secondary full">Recuperar mi último evento creado</button>
+          <button id="clearLastCreator" type="button" class="btn ghost full">Borrar acceso guardado en este dispositivo</button>
+        </div>
 
         <div class="creatorAccessBox">
           <h3>Acceso del creador</h3>
@@ -169,7 +231,28 @@
               <p class="muted">Código: <strong id="currentCode"></strong></p>
               <h2 id="currentTitle">Evento</h2>
               <p id="currentReason" class="lead small"></p>
+              <p id="currentTheme" class="themePill"></p>
               <p id="eventStatus" class="statusPill"></p>
+            </div>
+            <div class="eventBrandBadge">
+              <img class="eventBrandLogo" src="./assets/sixseven-logo.png" alt="Logo de sixseven" />
+            </div>
+            <div class="roundVisualizer glass-inset">
+              <div class="roundRingWrap">
+                <svg class="roundRing" viewBox="0 0 140 140" aria-hidden="true">
+                  <circle class="roundRingBase" cx="70" cy="70" r="54"></circle>
+                  <circle id="roundRingProgress" class="roundRingProgress" cx="70" cy="70" r="54"></circle>
+                </svg>
+                <div class="roundRingCenter">
+                  <strong id="roundTimerMain">07:00</strong>
+                  <span id="roundMiniLabel">Ronda 1/6</span>
+                </div>
+              </div>
+              <div class="roundMeta">
+                <p id="roundStatus" class="roundStatus">Ronda 1 de 6 · 07:00</p>
+                <div class="roundTrack mainRoundTrack"><div id="roundProgressMain" class="roundProgress"></div></div>
+                <small id="roundHintText">El voto se reinicia automáticamente al comenzar cada nueva ronda.</small>
+              </div>
             </div>
             <div class="counterGrid">
               <div class="counter">
@@ -185,16 +268,34 @@
         </header>
 
         <aside id="adminPanel" class="adminPanel glass-card hidden" aria-labelledby="adminTitle">
-          <h3 id="adminTitle">Panel del creador</h3>
+          <div class="adminTitleRow">
+            <div>
+              <p class="eyebrow">administración</p>
+              <h3 id="adminTitle">Panel del creador</h3>
+            </div>
+            <img class="adminMiniLogo" src="./assets/sixseven-logo.png" alt="Logo de sixseven" />
+          </div>
           <p class="muted">La votación está activa desde la creación. Desde aquí puedes compartir, modificar datos, cerrar, reiniciar, eliminar el evento o expulsar participantes.</p>
           <div class="adminActions">
             <button id="copyInvite" type="button" class="btn secondary">Copiar invitación</button>
             <button id="copyCreatorAccess" type="button" class="btn secondary">Copiar acceso creador</button>
             <button id="whatsappInvite" type="button" class="btn secondary">WhatsApp</button>
+            <button id="generateStickersPdf" type="button" class="btn secondary">PDF pegatinas</button>
+            <button id="generatePosterPdf" type="button" class="btn secondary">PDF cartel QR</button>
+            <button id="openPublicScreen" type="button" class="btn secondary">Pantalla pública</button>
             <button id="startVoting" type="button" class="btn primary hidden">Iniciar votación</button>
             <button id="toggleEventStatus" type="button" class="btn secondary">Cerrar evento</button>
             <button id="resetVotes" type="button" class="btn danger">Reiniciar votos</button>
             <button id="deleteEvent" type="button" class="btn danger outline">Eliminar evento</button>
+          </div>
+
+          <div class="adminNoticeBox">
+            <h4>Aviso general a participantes</h4>
+            <p class="muted">Envía un aviso visible para todas las personas del evento.</p>
+            <div class="inline-control">
+              <input id="adminAnnouncementText" type="text" placeholder="Ej.: Queda 1 minuto para votar" maxlength="120" autocomplete="off" />
+              <button id="sendAnnouncement" type="button" class="btn secondary small">Enviar aviso</button>
+            </div>
           </div>
 
           <div class="adminSettingsBox">
@@ -205,10 +306,26 @@
               </label>
               <label>Tipo de conexión
                 <select id="adminEventReason">
-                  <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
-                  <option value="Un café">☕ Un café</option>
-                  <option value="Una cena">🍷 Una cena</option>
-                  <option value="Una noche">🌙 Una noche</option>
+                  <option value="Una conversación">💬 Una conversación</option>
+              <option value="Un café">☕ Un café</option>
+              <option value="Una copa">🍸 Una copa</option>
+              <option value="Un baile">🎵 Un baile</option>
+              <option value="Una cena">🍷 Una cena</option>
+              <option value="Una cita">✨ Una cita</option>
+              <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
+              <option value="Una noche">🌙 Una noche</option>
+              <option value="__custom__">✍️ Personalizada</option>
+                </select>
+                <input id="adminEventReasonCustom" class="hidden" type="text" placeholder="Escribe tu tipo de conexión" maxlength="40" autocomplete="off" />
+              </label>
+
+              <label>Estilo visual
+                <select id="adminEventTheme">
+                  <option value="dark">Elegante oscuro</option>
+              <option value="passion">Rojo pasión</option>
+              <option value="white">Minimal blanco</option>
+              <option value="night">Fiesta nocturna</option>
+              <option value="gold">Premium dorado</option>
                 </select>
               </label>
               <label>Número máximo de participantes
@@ -220,6 +337,11 @@
                   <option value="12">12 personas</option>
                   <option value="0">Sin límite</option>
                 </select>
+              </label>
+
+              <label class="switch-row">
+                <input id="adminCloseEntryRound2" type="checkbox" />
+                <span>Cerrar entrada al empezar la ronda 2</span>
               </label>
               <label>Ampliar caducidad
                 <select id="adminExtendHours">
@@ -252,6 +374,16 @@
           </div>
         </aside>
 
+        <section id="announcementsBox" class="announcementsBox glass-card hidden" aria-live="polite">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">avisos del creador</p>
+              <h3>Mensajes del evento</h3>
+            </div>
+          </div>
+          <div id="announcementsList" class="announcementsList"></div>
+        </section>
+
         <section class="vote-panel glass-card">
           <div class="section-heading">
             <div>
@@ -276,6 +408,30 @@
           <p id="myVotesReceivedText" class="muted">Has recibido 0 votos.</p>
         </section>
 
+        <section id="participantToolsBox" class="participantTools glass-card hidden">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">privacidad</p>
+              <h3>Tu participación</h3>
+            </div>
+            <span class="privacy-badge">Control personal</span>
+          </div>
+          <p class="muted">Puedes salir del evento y solicitar el borrado de tu participación, votos y chats asociados.</p>
+          <button id="deleteMyParticipation" type="button" class="btn danger outline">Salir y borrar mi participación</button>
+        </section>
+
+        <section id="myMatchesBox" class="myMatchesCard glass-card hidden" aria-live="polite">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">tus matches</p>
+              <h3>Chats privados</h3>
+            </div>
+            <span class="privacy-badge">Reabrir chat</span>
+          </div>
+          <p class="muted">Aquí puedes volver a abrir tus chats privados aunque hayas cerrado la ventana del match.</p>
+          <div id="myMatchesList" class="myMatchesList"></div>
+        </section>
+
         <section class="stats glass-card">
           <div class="section-heading">
             <div>
@@ -288,6 +444,44 @@
         </section>
       </div>
 
+
+        <section id="finalResultsBox" class="finalResults glass-card hidden" aria-live="polite">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">evento finalizado</p>
+              <h3>Resultados finales</h3>
+            </div>
+            <span class="privacy-badge">Resumen seguro</span>
+          </div>
+          <div id="finalResultsContent" class="finalResultsContent"></div>
+        </section>
+
+        <section id="publicScreen" class="publicScreen glass-card hidden" aria-live="polite">
+          <button id="closePublicScreen" type="button" class="link publicClose">← Volver al evento</button>
+          <div class="publicBrand">
+            <img src="./assets/sixseven-logo.png" alt="sixseven" />
+            <div>
+              <p class="eyebrow">pantalla pública</p>
+              <h2>sixseven</h2>
+            </div>
+          </div>
+          <div class="publicMain">
+            <div>
+              <p class="muted">Estado del evento</p>
+              <h3 id="publicRound">Ronda 1 de 6</h3>
+              <div class="publicTimer" id="publicTimer">07:00</div>
+            </div>
+            <div class="publicCounters">
+              <article><span id="publicParticipants">0</span><small>participantes</small></article>
+              <article><span id="publicVotes">0</span><small>votos emitidos</small></article>
+              <article><span id="publicMatches">0</span><small>matches</small></article>
+            </div>
+          </div>
+          <div class="roundTrack publicTrack"><div id="publicProgress" class="roundProgress"></div></div>
+          <p class="muted publicPrivacy">Pantalla segura: no muestra nombres, votos individuales ni matches privados.</p>
+        </section>
+
+      <div id="roundNotice" class="roundNotice hidden" aria-live="assertive"></div>
       <div id="matchAlert" class="match hidden" role="dialog" aria-live="assertive"></div>
     </section>
   </main>
@@ -299,6 +493,18 @@
   </audio>
 
   <script src="./firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script type="module" src="./app.js"></script>
+
+  <script>
+    window.addEventListener("load", () => {
+      const splash = document.getElementById("splashScreen");
+      if (!splash) return;
+      setTimeout(() => {
+        splash.classList.add("is-hidden");
+        setTimeout(() => splash.remove(), 700);
+      }, 950);
+    });
+  </script>
 </body>
 </html>
