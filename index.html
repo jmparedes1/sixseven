@@ -87,17 +87,11 @@
 
           <label>Tipo de conexión
             <select id="eventReason">
-              <option value="Una conversación">💬 Una conversación</option>
-              <option value="Un café">☕ Un café</option>
-              <option value="Una copa">🍸 Una copa</option>
-              <option value="Un baile">🎵 Un baile</option>
-              <option value="Una cena">🍷 Una cena</option>
-              <option value="Una cita">✨ Una cita</option>
               <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
+              <option value="Un café">☕ Un café</option>
+              <option value="Una cena">🍷 Una cena</option>
               <option value="Una noche">🌙 Una noche</option>
-              <option value="__custom__">✍️ Personalizada</option>
             </select>
-            <input id="eventReasonCustom" class="hidden" type="text" placeholder="Escribe tu tipo de conexión" maxlength="40" autocomplete="off" />
           </label>
 
           <label>Estilo visual del evento
@@ -129,11 +123,6 @@
               <option value="12">12 personas</option>
               <option value="0">Sin límite</option>
             </select>
-          </label>
-
-          <label class="switch-row">
-            <input id="closeEntryRound2" type="checkbox" checked />
-            <span>Cerrar la entrada automáticamente al empezar la ronda 2</span>
           </label>
 
           <label>Clave de creador
@@ -255,21 +244,11 @@
             <button id="copyCreatorAccess" type="button" class="btn secondary">Copiar acceso creador</button>
             <button id="whatsappInvite" type="button" class="btn secondary">WhatsApp</button>
             <button id="generateStickersPdf" type="button" class="btn secondary">PDF pegatinas</button>
-            <button id="generatePosterPdf" type="button" class="btn secondary">PDF cartel QR</button>
             <button id="openPublicScreen" type="button" class="btn secondary">Pantalla pública</button>
             <button id="startVoting" type="button" class="btn primary hidden">Iniciar votación</button>
             <button id="toggleEventStatus" type="button" class="btn secondary">Cerrar evento</button>
             <button id="resetVotes" type="button" class="btn danger">Reiniciar votos</button>
             <button id="deleteEvent" type="button" class="btn danger outline">Eliminar evento</button>
-          </div>
-
-          <div class="adminNoticeBox">
-            <h4>Aviso general a participantes</h4>
-            <p class="muted">Envía un aviso visible para todas las personas del evento.</p>
-            <div class="inline-control">
-              <input id="adminAnnouncementText" type="text" placeholder="Ej.: Queda 1 minuto para votar" maxlength="120" autocomplete="off" />
-              <button id="sendAnnouncement" type="button" class="btn secondary small">Enviar aviso</button>
-            </div>
           </div>
 
           <div class="adminSettingsBox">
@@ -280,17 +259,11 @@
               </label>
               <label>Tipo de conexión
                 <select id="adminEventReason">
-                  <option value="Una conversación">💬 Una conversación</option>
-              <option value="Un café">☕ Un café</option>
-              <option value="Una copa">🍸 Una copa</option>
-              <option value="Un baile">🎵 Un baile</option>
-              <option value="Una cena">🍷 Una cena</option>
-              <option value="Una cita">✨ Una cita</option>
-              <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
-              <option value="Una noche">🌙 Una noche</option>
-              <option value="__custom__">✍️ Personalizada</option>
+                  <option value="7 minutos a solas">⏱ 7 minutos a solas</option>
+                  <option value="Un café">☕ Un café</option>
+                  <option value="Una cena">🍷 Una cena</option>
+                  <option value="Una noche">🌙 Una noche</option>
                 </select>
-                <input id="adminEventReasonCustom" class="hidden" type="text" placeholder="Escribe tu tipo de conexión" maxlength="40" autocomplete="off" />
               </label>
 
               <label>Estilo visual
@@ -311,11 +284,6 @@
                   <option value="12">12 personas</option>
                   <option value="0">Sin límite</option>
                 </select>
-              </label>
-
-              <label class="switch-row">
-                <input id="adminCloseEntryRound2" type="checkbox" />
-                <span>Cerrar entrada al empezar la ronda 2</span>
               </label>
               <label>Ampliar caducidad
                 <select id="adminExtendHours">
@@ -348,16 +316,6 @@
           </div>
         </aside>
 
-        <section id="announcementsBox" class="announcementsBox glass-card hidden" aria-live="polite">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">avisos del creador</p>
-              <h3>Mensajes del evento</h3>
-            </div>
-          </div>
-          <div id="announcementsList" class="announcementsList"></div>
-        </section>
-
         <section class="vote-panel glass-card">
           <div class="section-heading">
             <div>
@@ -380,30 +338,6 @@
             <div class="personalCounter"><span id="myVotesReceived">0</span></div>
           </div>
           <p id="myVotesReceivedText" class="muted">Has recibido 0 votos.</p>
-        </section>
-
-        <section id="participantToolsBox" class="participantTools glass-card hidden">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">privacidad</p>
-              <h3>Tu participación</h3>
-            </div>
-            <span class="privacy-badge">Control personal</span>
-          </div>
-          <p class="muted">Puedes salir del evento y solicitar el borrado de tu participación, votos y chats asociados.</p>
-          <button id="deleteMyParticipation" type="button" class="btn danger outline">Salir y borrar mi participación</button>
-        </section>
-
-        <section id="myMatchesBox" class="myMatchesCard glass-card hidden" aria-live="polite">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">tus matches</p>
-              <h3>Chats privados</h3>
-            </div>
-            <span class="privacy-badge">Reabrir chat</span>
-          </div>
-          <p class="muted">Aquí puedes volver a abrir tus chats privados aunque hayas cerrado la ventana del match.</p>
-          <div id="myMatchesList" class="myMatchesList"></div>
         </section>
 
         <section class="stats glass-card">

@@ -39,22 +39,10 @@ let privateMatchUnsubscribe = null;
 let adminSessionUnsubscribe = null;
 let hasAdminAccess = false;
 let roundTimerInterval = null;
-let activeChatUnsubscribe = null;
-let knownPrivateMatches = {};
-const autoShownMatches = new Set();
 
 const $ = (id) => document.getElementById(id);
 const views = ["home", "createView", "joinView", "eventView"];
-const VALID_REASONS = [
-  "Una conversación",
-  "Un café",
-  "Una copa",
-  "Un baile",
-  "Una cena",
-  "Una cita",
-  "7 minutos a solas",
-  "Una noche"
-];
+const VALID_REASONS = ["7 minutos a solas", "Un café", "Una cena", "Una noche"];
 const VALID_THEMES = ["dark", "passion", "white", "night", "gold"];
 const THEME_LABELS = {
   dark: "Elegante oscuro",
@@ -95,42 +83,6 @@ function cleanCode(value = "") {
 function cleanName(value = "") {
   return value.trim().replace(/\s+/g, " ").slice(0, 40);
 }
-
-
-function cleanReason(value = "") {
-  return cleanName(value).slice(0, 40);
-}
-
-function getSelectedReason(selectId, customId) {
-  const selected = $(selectId)?.value || "";
-  if (selected === "__custom__") return cleanReason($(customId)?.value || "");
-  return selected;
-}
-
-function validReason(value = "") {
-  const clean = cleanReason(value);
-  return VALID_REASONS.includes(clean) || (clean.length >= 3 && clean.length <= 40);
-}
-
-function syncCustomReason(selectId, customId, currentValue = "") {
-  const select = $(selectId);
-  const custom = $(customId);
-  if (!select || !custom) return;
-
-  const value = currentValue || select.value;
-  if (value && !VALID_REASONS.includes(value) && value !== "__custom__") {
-    select.value = "__custom__";
-    custom.value = value;
-  }
-
-  const isCustom = select.value === "__custom__";
-  custom.classList.toggle("hidden", !isCustom);
-  custom.classList.toggle("customReasonVisible", isCustom);
-  if (isCustom && !custom.value && currentValue && currentValue !== "__custom__") {
-    custom.value = currentValue;
-  }
-}
-
 
 function normalizeName(value = "") {
   return cleanName(value)
@@ -298,9 +250,7 @@ function eventIsExpired(event) {
 }
 
 function eventCanJoin(event) {
-  if (!["waiting", "open"].includes(event?.status) || eventIsExpired(event)) return false;
-  if (event?.closeEntryRound2 && getRoundInfo(event).currentRound >= 2) return false;
-  return true;
+  return ["waiting", "open"].includes(event?.status) && !eventIsExpired(event);
 }
 
 function eventCanVote(event) {
@@ -411,11 +361,6 @@ function stopListeners() {
   adminSessionUnsubscribe = null;
   hasAdminAccess = false;
   if (roundTimerInterval) clearInterval(roundTimerInterval);
-  if (activeChatUnsubscribe) activeChatUnsubscribe();
-  activeChatUnsubscribe = null;
-  knownPrivateMatches = {};
-  autoShownMatches.clear();
-  renderMyMatches();
   roundTimerInterval = null;
   currentEventCode = null;
   currentEvent = null;
@@ -441,12 +386,7 @@ bind("aliasBtn", "click", () => {
 window.addEventListener("DOMContentLoaded", () => {
   applyTheme("dark");
   renderLastCreatorAccessBox();
-  syncCustomReason("eventReason", "eventReasonCustom");
-  syncCustomReason("adminEventReason", "adminEventReasonCustom");
 });
-
-bind("eventReason", "change", () => syncCustomReason("eventReason", "eventReasonCustom"));
-bind("adminEventReason", "change", () => syncCustomReason("adminEventReason", "adminEventReasonCustom"));
 
 document.querySelectorAll("[data-back]").forEach(btn => btn.addEventListener("click", () => {
   stopListeners();
@@ -466,17 +406,16 @@ if (!firebaseIsConfigured) {
 bind("createEvent", "click", async () => {
   const button = $("createEvent");
   const name = cleanName($("eventName").value);
-  const reason = getSelectedReason("eventReason", "eventReasonCustom");
+  const reason = $("eventReason").value;
   const theme = normalizeTheme($("eventTheme")?.value || "dark");
   const maxParticipants = Number($("maxParticipants")?.value || 0);
-  const closeEntryRound2 = Boolean($("closeEntryRound2")?.checked);
   const soundEnabled = Boolean($("soundEnabled")?.checked);
   const creatorKey = normalizeCreatorKey($("creatorKeyCreate")?.value || "");
   const creatorKeyRepeat = normalizeCreatorKey($("creatorKeyCreateRepeat")?.value || "");
 
   if (!rateLimit("create", 10000)) return;
   if (!name) return toast("Indica el nombre del evento.");
-  if (!validReason(reason)) return toast("Selecciona o escribe un tipo de conexión válido.");
+  if (!VALID_REASONS.includes(reason)) return toast("Selecciona un tipo de conexión válido.");
   if (!validCreatorKey(creatorKey)) return toast("La clave de creador debe tener entre 6 y 32 caracteres: letras, números o guiones.");
   if (creatorKey !== creatorKeyRepeat) return toast("Las dos claves de creador no coinciden.");
 
@@ -502,7 +441,6 @@ bind("createEvent", "click", async () => {
       expiresAt,
       status: "open",
       maxParticipants,
-      closeEntryRound2,
       soundEnabled,
       roundStartedAt,
       roundDurationMs: ROUND_DURATION_MS,
@@ -778,47 +716,15 @@ bind("closePublicScreen", "click", () => {
   document.body.classList.remove("public-mode");
 });
 
-
-bind("sendAnnouncement", "click", async () => {
-  if (!currentEventCode || !currentEvent || !isAdmin()) return;
-  const input = $("adminAnnouncementText");
-  const text = cleanName(input?.value || "").slice(0, 120);
-  if (!text) return toast("Escribe el aviso antes de enviarlo.");
-  try {
-    const key = `${Date.now()}_${uid}`;
-    await set(ref(db, `events/${currentEventCode}/announcements/${key}`), {
-      text,
-      createdAt: Date.now(),
-      creatorUid: uid
-    });
-    input.value = "";
-    toast("Aviso enviado a todos los participantes.");
-  } catch (error) {
-    console.error("Error enviando aviso:", error);
-    toast("No se pudo enviar el aviso. Revisa las reglas.");
-  }
-});
-
-bind("deleteMyParticipation", "click", async () => {
-  await deleteMyParticipation();
-});
-
-bind("generatePosterPdf", "click", async () => {
-  if (!currentEventCode || !currentEvent || !isAdmin()) return;
-  await generatePosterPdf();
-});
-
-
 bind("saveAdminSettings", "click", async () => {
   if (!currentEventCode || !currentEvent || !isAdmin()) return;
   const msg = $("adminSettingsMsg");
   if (msg) msg.textContent = "";
 
   const name = cleanName($("adminEventName")?.value || "");
-  const reason = getSelectedReason("adminEventReason", "adminEventReasonCustom");
+  const reason = $("adminEventReason")?.value || "";
   const theme = normalizeTheme($("adminEventTheme")?.value || currentEvent?.theme || "dark");
   const maxParticipants = Number($("adminMaxParticipants")?.value || 0);
-  const closeEntryRound2 = Boolean($("adminCloseEntryRound2")?.checked);
   const soundEnabled = Boolean($("adminSoundEnabled")?.checked);
   const extendHours = Number($("adminExtendHours")?.value || 0);
   const newCreatorKey = normalizeCreatorKey($("adminCreatorKeyNew")?.value || "");
@@ -826,12 +732,12 @@ bind("saveAdminSettings", "click", async () => {
   const recoveryAnswer = normalizeRecoveryAnswer($("adminRecoveryAnswer")?.value || "");
 
   if (!name) return toast("El nombre del evento no puede quedar vacío.");
-  if (!validReason(reason)) return toast("Selecciona o escribe un tipo de conexión válido.");
+  if (!VALID_REASONS.includes(reason)) return toast("Selecciona un tipo de conexión válido.");
   if (newCreatorKey && !validCreatorKey(newCreatorKey)) return toast("La nueva clave debe tener entre 6 y 32 caracteres: letras, números o guiones.");
   if (recoveryAnswer && !validRecovery(recoveryQuestion, recoveryAnswer)) return toast("Para cambiar la respuesta, indica también una pregunta de recuperación válida.");
 
   try {
-    const eventUpdates = { name, reason, theme, maxParticipants, closeEntryRound2, soundEnabled, recoveryQuestion };
+    const eventUpdates = { name, reason, theme, maxParticipants, soundEnabled, recoveryQuestion };
     if (extendHours > 0) {
       const base = Math.max(Date.now(), Number(currentEvent.expiresAt || Date.now()));
       eventUpdates.expiresAt = base + extendHours * 60 * 60 * 1000;
@@ -899,7 +805,6 @@ bind("deleteEvent", "click", async () => {
   if (!ok) return;
   const code = currentEventCode;
   await remove(ref(db, `privateMatches/${code}`));
-  await remove(ref(db, `chats/${code}`));
   await remove(ref(db, `eventSecrets/${code}`));
   await remove(ref(db, `adminSessions/${code}`));
   await remove(ref(db, `events/${code}`));
@@ -948,14 +853,7 @@ function openEvent(code) {
 
   privateMatchUnsubscribe = onValue(ref(db, `privateMatches/${code}/${uid}`), (snap) => {
     const notices = snap.val() || {};
-    knownPrivateMatches = notices;
-    renderMyMatches();
-    Object.entries(notices).forEach(([key, notice]) => {
-      if (!autoShownMatches.has(key)) {
-        autoShownMatches.add(key);
-        showMatch(notice.withName, key, notice.withUid, false);
-      }
-    });
+    Object.entries(notices).forEach(([key, notice]) => showMatch(notice.withName, key));
   });
 
   adminSessionUnsubscribe = onValue(ref(db, `adminSessions/${code}/${uid}`), (snap) => {
@@ -1008,8 +906,6 @@ function renderEvent(event) {
         : `Ronda ${round.currentRound}/${round.totalRounds}. Tu voto es secreto y se reinicia cada 7 minutos.`;
 
   renderAdminPanel(isCreator, event, participants, votes);
-  renderAnnouncements(event);
-  renderParticipantTools(participants);
   renderParticipants(participants, votes, canVote);
   renderMyVotesReceived(participants, votes);
   renderPrivateHistory(participants, allVotesByRound, round);
@@ -1268,151 +1164,6 @@ async function generateStickersPdf() {
   }
 }
 
-
-function renderAnnouncements(event = {}) {
-  const box = $("announcementsBox");
-  const list = $("announcementsList");
-  if (!box || !list) return;
-  const entries = Object.entries(event.announcements || {})
-    .map(([id, item]) => ({ id, ...item }))
-    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
-    .slice(0, 5);
-
-  box.classList.toggle("hidden", entries.length === 0);
-  list.innerHTML = "";
-  entries.forEach(item => {
-    const row = document.createElement("div");
-    row.className = "announcementItem";
-    row.innerHTML = `<strong>${formatDate(item.createdAt || Date.now())}</strong><p>${escapeHtml(item.text || "")}</p>`;
-    list.appendChild(row);
-  });
-}
-
-function renderParticipantTools(participants = {}) {
-  const box = $("participantToolsBox");
-  if (!box) return;
-  box.classList.toggle("hidden", !participants?.[uid] || isAdmin());
-}
-
-async function deleteMyParticipation() {
-  if (!currentEventCode || !currentEvent || !uid) return;
-  const participant = currentEvent.participants?.[uid];
-  if (!participant) return toast("No estás registrado como participante en este evento.");
-  const ok = confirm("¿Quieres salir y borrar tu participación? Se eliminarán tu alias, votos emitidos, votos asociados y chats de match relacionados.");
-  if (!ok) return;
-
-  try {
-    const updates = {};
-    updates[`events/${currentEventCode}/participants/${uid}`] = null;
-    if (participant.normalizedName) {
-      updates[`events/${currentEventCode}/nameIndex/${participant.normalizedName}`] = null;
-    }
-    updates[`privateMatches/${currentEventCode}/${uid}`] = null;
-
-    Object.entries(currentEvent.votesByRound || {}).forEach(([roundKey, roundVotes]) => {
-      updates[`events/${currentEventCode}/votesByRound/${roundKey}/${uid}`] = null;
-      Object.entries(roundVotes || {}).forEach(([voterUid, vote]) => {
-        if (vote?.targetUid === uid) {
-          updates[`events/${currentEventCode}/votesByRound/${roundKey}/${voterUid}`] = null;
-        }
-      });
-    });
-
-    Object.entries(knownPrivateMatches || {}).forEach(([matchKey]) => {
-      updates[`chats/${currentEventCode}/${matchKey}`] = null;
-    });
-
-    Object.entries(currentEvent.participants || {}).forEach(([otherUid]) => {
-      if (otherUid === uid) return;
-      const pair = pairKey(uid, otherUid);
-      for (let round = 1; round <= TOTAL_ROUNDS; round += 1) {
-        const matchKey = `${round}_${pair}`;
-        updates[`events/${currentEventCode}/matchPairsByRound/${round}/${pair}`] = null;
-        updates[`privateMatches/${currentEventCode}/${otherUid}/${matchKey}`] = null;
-        updates[`chats/${currentEventCode}/${matchKey}`] = null;
-      }
-    });
-
-    await update(ref(db), updates);
-    toast("Tu participación se ha borrado.");
-    stopListeners();
-    show("home");
-  } catch (error) {
-    console.error("Error borrando participación:", error);
-    toast("No se pudo borrar la participación. Revisa las reglas de Firebase.");
-  }
-}
-
-async function qrDataUrlForEvent(code) {
-  const url = `https://api.qrserver.com/v1/create-qr-code/?size=800x800&data=${encodeURIComponent(buildInviteUrl(code))}`;
-  return await imageToDataUrl(url);
-}
-
-async function generatePosterPdf() {
-  if (!window.jspdf?.jsPDF) {
-    toast("No se pudo cargar la librería PDF. Revisa tu conexión.");
-    return;
-  }
-
-  try {
-    toast("Generando cartel PDF con QR...");
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const logoDataUrl = await imageToDataUrl("./assets/sixseven-logo.png");
-    const qrDataUrl = await qrDataUrlForEvent(currentEventCode);
-    const colors = stickerThemeColors(currentEvent?.theme || "dark");
-
-    pdf.setFillColor(colors.top[0], colors.top[1], colors.top[2]);
-    pdf.rect(0, 0, 210, 297, "F");
-
-    pdf.setFillColor(255, 255, 255);
-    pdf.roundedRect(18, 18, 174, 261, 8, 8, "F");
-
-    pdf.addImage(logoDataUrl, "PNG", 78, 26, 54, 54);
-
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.setFontSize(24);
-    pdf.text("sixseven", 105, 90, { align: "center" });
-
-    pdf.setFontSize(18);
-    pdf.text(currentEvent?.name || "Evento privado", 105, 108, { align: "center", maxWidth: 150 });
-
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(12);
-    pdf.setTextColor(90, 82, 96);
-    pdf.text(`Tipo de conexión: ${currentEvent?.reason || "Privado"}`, 105, 120, { align: "center" });
-    pdf.text("6 rondas de 7 minutos · voto privado · match mutuo", 105, 128, { align: "center" });
-
-    pdf.addImage(qrDataUrl, "PNG", 60, 140, 90, 90);
-
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(colors.accent[0], colors.accent[1], colors.accent[2]);
-    pdf.setFontSize(18);
-    pdf.text(`Código: ${currentEventCode}`, 105, 244, { align: "center" });
-
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(9);
-    pdf.setTextColor(90, 82, 96);
-    pdf.text("Escanea el QR para participar. Solo para personas adultas y con consentimiento.", 105, 258, { align: "center", maxWidth: 150 });
-    pdf.text(buildInviteUrl(currentEventCode), 105, 266, { align: "center", maxWidth: 150 });
-
-    const safeName = (currentEvent?.name || "sixseven")
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .toLowerCase()
-      .slice(0, 40) || "sixseven";
-
-    pdf.save(`cartel-${safeName}-${currentEventCode}.pdf`);
-    toast("Cartel PDF generado.");
-  } catch (error) {
-    console.error("Error generando cartel:", error);
-    toast("No se pudo generar el cartel PDF.");
-  }
-}
-
-
 function renderAdminPanel(isCreator, event, participants = {}, votes = {}) {
   const panel = $("adminPanel");
   panel.classList.toggle("hidden", !isCreator);
@@ -1433,13 +1184,9 @@ function renderAdminPanel(isCreator, event, participants = {}, votes = {}) {
 
 function populateAdminSettings(event) {
   if ($("adminEventName") && document.activeElement !== $("adminEventName")) $("adminEventName").value = event.name || "";
-  if ($("adminEventReason")) {
-    $("adminEventReason").value = VALID_REASONS.includes(event.reason) ? event.reason : "__custom__";
-    syncCustomReason("adminEventReason", "adminEventReasonCustom", event.reason || "");
-  }
+  if ($("adminEventReason") && VALID_REASONS.includes(event.reason)) $("adminEventReason").value = event.reason;
   if ($("adminEventTheme")) $("adminEventTheme").value = normalizeTheme(event.theme || "dark");
   if ($("adminMaxParticipants")) $("adminMaxParticipants").value = String(Number(event.maxParticipants || 0));
-  if ($("adminCloseEntryRound2")) $("adminCloseEntryRound2").checked = Boolean(event.closeEntryRound2);
   if ($("adminSoundEnabled")) $("adminSoundEnabled").checked = Boolean(event.soundEnabled);
   if ($("adminRecoveryQuestion") && document.activeElement !== $("adminRecoveryQuestion")) $("adminRecoveryQuestion").value = event.recoveryQuestion || "";
 }
@@ -1487,7 +1234,6 @@ async function removeParticipant(participantUid, participantName) {
         const key = `${round}_${pair}`;
         updates[`events/${currentEventCode}/matchPairsByRound/${round}/${pair}`] = null;
         updates[`privateMatches/${currentEventCode}/${otherUid}/${key}`] = null;
-        updates[`chats/${currentEventCode}/${key}`] = null;
       }
     });
     if (participantUid && currentEvent?.participants?.[participantUid]?.normalizedName) {
@@ -1573,13 +1319,7 @@ async function createPrivateMatchNotice(targetUid, targetName, participants, rou
       withName: currentParticipantName || participants?.[uid]?.name || "otra persona",
       round: roundKey,
       createdAt: serverTimestamp()
-    },
-    [`chats/${currentEventCode}/${key}/members/${uid}`]: true,
-    [`chats/${currentEventCode}/${key}/members/${targetUid}`]: true,
-    [`chats/${currentEventCode}/${key}/memberNames/${uid}`]: currentParticipantName || participants?.[uid]?.name || "Yo",
-    [`chats/${currentEventCode}/${key}/memberNames/${targetUid}`]: targetName,
-    [`chats/${currentEventCode}/${key}/round`]: roundKey,
-    [`chats/${currentEventCode}/${key}/createdAt`]: serverTimestamp()
+    }
   });
 }
 
@@ -1673,167 +1413,25 @@ function renderDistribution(participants, votes) {
   });
 }
 
-function safeMessageText(value = "") {
-  return String(value)
-    .trim()
-    .replace(/\s+/g, " ")
-    .slice(0, 500);
-}
-
-function chatMessageKey() {
-  return `${Date.now()}_${uid || "anon"}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function renderChatMessages(messages = {}, withName = "") {
-  const list = $("matchChatMessages");
-  if (!list) return;
-  const entries = Object.entries(messages || {})
-    .map(([id, msg]) => ({ id, ...msg }))
-    .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
-
-  if (!entries.length) {
-    list.innerHTML = `<p class="muted chatEmpty">Aún no hay mensajes. Puedes empezar con un saludo discreto.</p>`;
-    return;
-  }
-
-  list.innerHTML = "";
-  entries.forEach(msg => {
-    const mine = msg.senderUid === uid;
-    const row = document.createElement("div");
-    row.className = `chatMessage ${mine ? "mine" : "theirs"}`;
-    row.innerHTML = `
-      <div class="chatBubble">
-        <small>${mine ? "Tú" : escapeHtml(withName || "Match")}</small>
-        <p>${escapeHtml(msg.text || "")}</p>
-      </div>
-    `;
-    list.appendChild(row);
-  });
-  list.scrollTop = list.scrollHeight;
-}
-
-function subscribeToMatchChat(matchKey = "", withName = "") {
-  if (activeChatUnsubscribe) activeChatUnsubscribe();
-  activeChatUnsubscribe = null;
-  if (!currentEventCode || !matchKey || !uid) return;
-
-  activeChatUnsubscribe = onValue(ref(db, `chats/${currentEventCode}/${matchKey}/messages`), (snap) => {
-    renderChatMessages(snap.val() || {}, withName);
-  });
-}
-
-async function sendMatchChatMessage(matchKey = "") {
-  const input = $("matchChatInput");
-  const text = safeMessageText(input?.value || "");
-  if (!currentEventCode || !matchKey || !uid) return;
-  if (!text) return toast("Escribe un mensaje antes de enviar.");
-
-  try {
-    const msgKey = chatMessageKey();
-    await set(ref(db, `chats/${currentEventCode}/${matchKey}/messages/${msgKey}`), {
-      senderUid: uid,
-      senderName: currentParticipantName || currentEvent?.participants?.[uid]?.name || "Yo",
-      text,
-      createdAt: Date.now()
-    });
-    input.value = "";
-  } catch (error) {
-    console.error("Error enviando mensaje privado:", error);
-    toast("No se pudo enviar el mensaje. Revisa las reglas de Firebase.");
-  }
-}
-
-
-function renderMyMatches() {
-  const box = $("myMatchesBox");
-  const list = $("myMatchesList");
-  if (!box || !list) return;
-
-  const entries = Object.entries(knownPrivateMatches || {})
-    .filter(([, notice]) => notice?.withName)
-    .sort(([, a], [, b]) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
-
-  box.classList.toggle("hidden", entries.length === 0);
-  list.innerHTML = "";
-
-  if (!entries.length) return;
-
-  entries.forEach(([matchKey, notice]) => {
-    const item = document.createElement("div");
-    item.className = "matchListItem";
-    const roundText = notice.round ? `Ronda ${notice.round}` : "Match privado";
-    item.innerHTML = `
-      <span>
-        <strong>${escapeHtml(notice.withName || "Match")}</strong>
-        <small>${escapeHtml(roundText)} · chat privado disponible</small>
-      </span>
-      <button type="button" class="btn secondary small">Abrir chat</button>
-    `;
-    item.querySelector("button")?.addEventListener("click", () => {
-      showMatch(notice.withName, matchKey, notice.withUid, true);
-    });
-    list.appendChild(item);
-  });
-}
-
-
-function showMatch(withName, matchKey = "", withUid = "", reopened = false) {
+function showMatch(withName, matchKey = "") {
   if (!withName) return;
   const box = $("matchAlert");
   box.classList.remove("hidden");
   box.innerHTML = `
-    <h3>${reopened ? "💬 Chat privado" : "✨ Match privado"}</h3>
+    <h3>✨ Match privado</h3>
     <p>Tú y <strong>${escapeHtml(withName)}</strong> os habéis elegido mutuamente.</p>
-    <p>Ahora podéis usar este chat privado. Solo las dos personas del match pueden leer y escribir aquí.</p>
-
-    <div class="matchChat" aria-label="Chat privado del match">
-      <div id="matchChatMessages" class="matchChatMessages">
-        <p class="muted chatEmpty">Cargando chat privado...</p>
-      </div>
-      <div class="quickReactions">
-        <button type="button" class="btn ghost quickReaction" data-message="👋 Hola, me alegra el match.">👋 Hola</button>
-        <button type="button" class="btn ghost quickReaction" data-message="☕ ¿Tomamos algo?">☕ ¿Tomamos algo?</button>
-        <button type="button" class="btn ghost quickReaction" data-message="😊 Me alegra el match.">😊 Me alegra</button>
-      </div>
-      <div class="matchChatForm">
-        <input id="matchChatInput" type="text" maxlength="500" placeholder="Escribe un mensaje privado..." autocomplete="off" />
-        <button id="sendMatchChat" class="btn primary small" type="button">Enviar</button>
-      </div>
-      <p class="muted chatPrivacy">Chat privado entre las dos personas del match. Mensajes visibles solo dentro de este evento.</p>
-    </div>
-
+    <p>Solo las dos personas implicadas reciben este aviso.</p>
     <div class="match-actions">
       <button id="closeMatch" class="btn secondary" type="button">Cerrar</button>
-      ${matchKey ? `<button id="ackMatch" class="btn ghost" type="button">Cerrar y mantener chat</button>` : ""}
+      ${matchKey ? `<button id="ackMatch" class="btn ghost" type="button">No volver a mostrar</button>` : ""}
     </div>
   `;
-
-  subscribeToMatchChat(matchKey, withName);
-
-  document.querySelectorAll(".quickReaction").forEach(button => {
-    button.addEventListener("click", () => {
-      const input = $("matchChatInput");
-      if (input) input.value = button.dataset.message || "";
-      sendMatchChatMessage(matchKey);
-    });
-  });
-  $("sendMatchChat")?.addEventListener("click", () => sendMatchChatMessage(matchKey));
-  $("matchChatInput")?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") sendMatchChatMessage(matchKey);
-  });
-
-  $("closeMatch")?.addEventListener("click", () => {
+  $("closeMatch")?.addEventListener("click", () => box.classList.add("hidden"));
+  $("ackMatch")?.addEventListener("click", async () => {
+    if (currentEventCode && uid && matchKey) {
+      await remove(ref(db, `privateMatches/${currentEventCode}/${uid}/${matchKey}`));
+    }
     box.classList.add("hidden");
-    if (activeChatUnsubscribe) activeChatUnsubscribe();
-    activeChatUnsubscribe = null;
-    toast("Chat cerrado. Puedes reabrirlo desde “Tus matches”.");
-  });
-
-  $("ackMatch")?.addEventListener("click", () => {
-    box.classList.add("hidden");
-    if (activeChatUnsubscribe) activeChatUnsubscribe();
-    activeChatUnsubscribe = null;
-    toast("Chat cerrado. Puedes reabrirlo desde “Tus matches”.");
   });
 
   if (currentEvent?.soundEnabled) {
