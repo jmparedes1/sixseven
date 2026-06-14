@@ -42,8 +42,6 @@ let roundTimerInterval = null;
 let activeChatUnsubscribe = null;
 let knownPrivateMatches = {};
 const autoShownMatches = new Set();
-let lastRenderedRoundSignature = null;
-let roundNoticeTimer = null;
 
 const $ = (id) => document.getElementById(id);
 const views = ["home", "createView", "joinView", "eventView"];
@@ -309,67 +307,6 @@ function eventCanVote(event) {
   return event?.status === "open" && !eventIsExpired(event) && !getRoundInfo(event).eventEnded;
 }
 
-
-const ROUND_RING_CIRCUMFERENCE = 2 * Math.PI * 54;
-
-function renderRoundVisualizer(round) {
-  const timerMain = $("roundTimerMain");
-  const miniLabel = $("roundMiniLabel");
-  const ring = $("roundRingProgress");
-  const progressBar = $("roundProgressMain");
-  const status = $("roundStatus");
-  const hint = $("roundHintText");
-  if (!timerMain || !miniLabel || !ring) return;
-
-  const roundElapsed = Math.max(0, round.roundDuration - round.msRemaining);
-  const roundPercent = round.eventEnded ? 100 : Math.min(100, Math.round((roundElapsed / round.roundDuration) * 100));
-  const offset = ROUND_RING_CIRCUMFERENCE * (1 - roundPercent / 100);
-  ring.style.strokeDasharray = String(ROUND_RING_CIRCUMFERENCE);
-  ring.style.strokeDashoffset = String(offset);
-
-  timerMain.textContent = round.eventEnded ? "00:00" : formatRemaining(round.msRemaining);
-  miniLabel.textContent = round.eventEnded ? "Evento finalizado" : `Ronda ${round.currentRound}/${round.totalRounds}`;
-  if (status) status.textContent = round.eventEnded ? `Evento finalizado · ${round.totalRounds}/${round.totalRounds}` : `Ronda ${round.currentRound} de ${round.totalRounds} · ${formatRemaining(round.msRemaining)}`;
-  if (progressBar) progressBar.style.width = `${round.progress}%`;
-  if (hint) hint.textContent = round.eventEnded ? "Las rondas han terminado. Puedes revisar los resultados y los chats privados." : (roundPercent >= 85 ? "Queda muy poco para que se abra una nueva ronda." : "El voto se reinicia automáticamente al comenzar cada nueva ronda.");
-}
-
-function showRoundNotice(title, message) {
-  const box = $("roundNotice");
-  if (!box) return;
-  box.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(message)}</span>`;
-  box.classList.remove('hidden');
-  requestAnimationFrame(() => box.classList.add('show'));
-  if (roundNoticeTimer) clearTimeout(roundNoticeTimer);
-  roundNoticeTimer = setTimeout(() => {
-    box.classList.remove('show');
-    setTimeout(() => box.classList.add('hidden'), 280);
-  }, 3400);
-}
-
-function handleRoundTransition(round) {
-  const signature = `${currentEventCode || ''}_${round.currentRound}_${round.eventEnded ? 'end' : 'live'}`;
-  if (!lastRenderedRoundSignature) {
-    lastRenderedRoundSignature = signature;
-    return;
-  }
-  if (lastRenderedRoundSignature === signature) return;
-
-  const previous = lastRenderedRoundSignature;
-  lastRenderedRoundSignature = signature;
-  if (round.eventEnded) {
-    showRoundNotice('Evento finalizado', 'Las seis rondas se han completado. Ya puedes revisar resultados y matches.');
-    return;
-  }
-  showRoundNotice(`Nueva ronda ${round.currentRound}`, 'Ya puedes volver a votar. Tu elección anterior se ha reiniciado.');
-}
-
-function participantCardMeta(participantUid, myVote, canVote) {
-  if (myVote === participantUid) return 'Elegida en esta ronda';
-  if (!canVote) return 'Votación cerrada en este momento';
-  if (myVote) return 'Ya has usado tu voto';
-  return 'Una sola elección por ronda';
-}
 function formatDate(timestamp) {
   if (!timestamp) return "sin fecha";
   return new Intl.DateTimeFormat("es-ES", {
@@ -479,9 +416,6 @@ function stopListeners() {
   knownPrivateMatches = {};
   autoShownMatches.clear();
   renderMyMatches();
-  lastRenderedRoundSignature = null;
-  if (roundNoticeTimer) clearTimeout(roundNoticeTimer);
-  $("roundNotice")?.classList.add("hidden");
   roundTimerInterval = null;
   currentEventCode = null;
   currentEvent = null;
@@ -1062,8 +996,7 @@ function renderEvent(event) {
   $("votesCount").textContent = votedCount;
   $("participantCount").textContent = max > 0 ? `${Object.keys(participants).length}/${max}` : Object.keys(participants).length;
   $("eventStatus").textContent = statusText(event);
-  renderRoundVisualizer(round);
-  handleRoundTransition(round);
+  if ($("roundStatus")) $("roundStatus").textContent = round.eventEnded ? "Finalizado" : `Ronda ${round.currentRound} de ${round.totalRounds} · ${formatRemaining(round.msRemaining)}`;
   if ($("roundProgress")) $("roundProgress").style.width = `${round.progress}%`;
 
   $("voteHelp").textContent = !canJoin
@@ -1072,7 +1005,7 @@ function renderEvent(event) {
       ? "La votación aún no está abierta."
       : myVote
         ? `Voto registrado en la ronda ${round.currentRound}. En la siguiente ronda podrás votar de nuevo.`
-        : `Ronda ${round.currentRound}/${round.totalRounds}. Elige una tarjeta premium. Tu voto es secreto y se reinicia cada 7 minutos.`;
+        : `Ronda ${round.currentRound}/${round.totalRounds}. Tu voto es secreto y se reinicia cada 7 minutos.`;
 
   renderAdminPanel(isCreator, event, participants, votes);
   renderAnnouncements(event);
@@ -1580,16 +1513,9 @@ function renderParticipants(participants, votes, canVote) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = `btn person ${myVote === participantUid ? "selected" : ""}`;
+      btn.textContent = participant.name || "Participante";
       btn.title = participant.name || "Participante";
       btn.disabled = Boolean(myVote) || !canVote;
-      btn.innerHTML = `
-        <span class="personAvatar"><img src="./assets/icon-user.svg" alt="" /></span>
-        <span class="personBody">
-          <strong class="personName">${escapeHtml(participant.name || "Participante")}</strong>
-          <small class="personMeta">${escapeHtml(participantCardMeta(participantUid, myVote, canVote))}</small>
-        </span>
-        <span class="personAction">${myVote === participantUid ? "Elegida" : (canVote && !myVote ? "Elegir" : "Privado")}</span>
-      `;
       btn.addEventListener("click", () => vote(participantUid, participant.name || "Participante", participants));
       container.appendChild(btn);
     });

@@ -26,48 +26,39 @@
       <div class="ambient ambient-one"></div>
       <div class="ambient ambient-two"></div>
 
-      
-      <div class="home-card glass-card home-card-clean">
+      <div class="home-card glass-card">
         <div class="brand-hero">
           <img class="brand-logo brand-logo-hero" src="./assets/sixseven-logo.png" alt="Logo de sixseven" />
-          <p class="eyebrow">eventos privados · votación secreta</p>
+          <p class="eyebrow">eventos privados · votos secretos · coincidencias reales</p>
           <div class="brand">sixseven</div>
         </div>
 
-        <h1 id="homeTitle">Conecta de forma elegante y privada.</h1>
-        <p class="lead">Crea una sala, comparte un código y deja que las coincidencias hablen por sí solas.</p>
+        <h1 id="homeTitle">Conexiones reales. Decisiones privadas.</h1>
+        <p class="lead">
+          Crea una sala privada, comparte el código y deja que cada persona elija en secreto.
+          Solo se revela una conexión cuando dos personas se eligen mutuamente.
+        </p>
+
+        <div class="trust-strip" aria-label="Principios de privacidad">
+          <span>Voto anónimo</span>
+          <span>Match privado</span>
+          <span>Evento temporal</span>
+        </div>
 
         <div class="actions main-actions">
-          <button id="showCreate" type="button" class="btn primary xl">Crear evento</button>
+          <button id="showCreate" type="button" class="btn primary xl">Crear un evento privado</button>
           <button id="showJoin" type="button" class="btn secondary xl">Entrar con código</button>
         </div>
 
-        <section class="featureGrid" aria-label="Características principales">
-          <article class="featureCard">
-            <img class="featureIcon" src="./assets/icon-privacy.svg" alt="Privacidad" />
-            <strong>Voto privado</strong>
-            <span>Solo se revela una coincidencia mutua.</span>
-          </article>
-          <article class="featureCard">
-            <img class="featureIcon" src="./assets/icon-rounds.svg" alt="Rondas" />
-            <strong>Modo 6×7</strong>
-            <span>Seis rondas de siete minutos.</span>
-          </article>
-          <article class="featureCard">
-            <img class="featureIcon" src="./assets/icon-match.svg" alt="Match" />
-            <strong>Match privado</strong>
-            <span>Aviso discreto y chat entre dos personas.</span>
-          </article>
-          <article class="featureCard">
-            <img class="featureIcon" src="./assets/icon-creator.svg" alt="Creador" />
-            <strong>Control del creador</strong>
-            <span>QR, pegatinas, avisos y panel premium.</span>
-          </article>
+        <section class="how-card" aria-labelledby="howTitle">
+          <h2 id="howTitle">Cómo funciona</h2>
+          <div class="steps">
+            <article><strong>1</strong><span>Entras con nombre o alias.</span></article>
+            <article><strong>2</strong><span>Eliges solo a una persona.</span></article>
+            <article><strong>3</strong><span>Tu voto queda oculto.</span></article>
+            <article><strong>4</strong><span>Si hay elección mutua, hay match.</span></article>
+          </div>
         </section>
-
-        <p class="legalNote legalMini">Solo para personas adultas, con consentimiento y en eventos privados.</p>
-      </div>
-    </section>
 
         <p class="legalNote">
           Uso recomendado exclusivamente para personas adultas, en eventos privados y con consentimiento de quienes participan.
@@ -236,23 +227,6 @@
             </div>
             <div class="eventBrandBadge">
               <img class="eventBrandLogo" src="./assets/sixseven-logo.png" alt="Logo de sixseven" />
-            </div>
-            <div class="roundVisualizer glass-inset">
-              <div class="roundRingWrap">
-                <svg class="roundRing" viewBox="0 0 140 140" aria-hidden="true">
-                  <circle class="roundRingBase" cx="70" cy="70" r="54"></circle>
-                  <circle id="roundRingProgress" class="roundRingProgress" cx="70" cy="70" r="54"></circle>
-                </svg>
-                <div class="roundRingCenter">
-                  <strong id="roundTimerMain">07:00</strong>
-                  <span id="roundMiniLabel">Ronda 1/6</span>
-                </div>
-              </div>
-              <div class="roundMeta">
-                <p id="roundStatus" class="roundStatus">Ronda 1 de 6 · 07:00</p>
-                <div class="roundTrack mainRoundTrack"><div id="roundProgressMain" class="roundProgress"></div></div>
-                <small id="roundHintText">El voto se reinicia automáticamente al comenzar cada nueva ronda.</small>
-              </div>
             </div>
             <div class="counterGrid">
               <div class="counter">
@@ -481,7 +455,6 @@
           <p class="muted publicPrivacy">Pantalla segura: no muestra nombres, votos individuales ni matches privados.</p>
         </section>
 
-      <div id="roundNotice" class="roundNotice hidden" aria-live="assertive"></div>
       <div id="matchAlert" class="match hidden" role="dialog" aria-live="assertive"></div>
     </section>
   </main>

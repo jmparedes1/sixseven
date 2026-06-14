@@ -277,21 +277,3 @@ Esta versión incorpora:
    El creador puede generar un cartel A4 con logo, nombre del evento, código y QR de acceso.
 
 Recuerda publicar de nuevo `firebase.rules.json` en Firebase Realtime Database > Rules.
-
-
-## Mejoras visuales y de experiencia añadidas
-
-Esta versión incorpora:
-
-- **Temporizador visual con círculo animado** en la cabecera del evento.
-- **Aviso de nueva ronda** cuando se abre una nueva votación.
-- **Portada inicial más limpia**, con menos texto y bloques visuales.
-- **Tarjetas premium de participantes** en lugar de botones simples.
-- **Iconos propios** en formato SVG para privacidad, rondas, match, chat y creador.
-
-
-## VERSIÓN FINAL COMPLETA
-
-Integra las últimas mejoras: modo 6×7, temporizador circular animado, aviso de nueva ronda, pantalla inicial limpia, tarjetas premium, iconos premium dorado extremo, panel del creador, recuperación, estilos visuales, tipos personalizados, chat privado con reapertura, PDF de pegatinas, PDF de cartel QR, avisos del creador, borrado de participación y cierre automático de entrada en ronda 2.
-
-Recuerda publicar `firebase.rules.json` en Firebase Realtime Database > Rules.
