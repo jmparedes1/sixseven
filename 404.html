@@ -141,8 +141,8 @@
           </label>
 
           <label class="switch-row">
-            <input id="closeEntryRound2" type="checkbox" checked />
-            <span>Cerrar la entrada automáticamente al empezar la ronda 2</span>
+            <input id="closeEntryRound2" type="checkbox" />
+            <span>Cerrar la entrada al empezar la ronda 2 (opcional)</span>
           </label>
 
           <label>Clave de creador
@@ -275,7 +275,7 @@
             </div>
             <img class="adminMiniLogo" src="assets/sixseven-logo.png" alt="Logo de sixseven" />
           </div>
-          <p class="muted">La votación está activa desde la creación. Desde aquí puedes compartir, modificar datos, cerrar, reiniciar, eliminar el evento o expulsar participantes.</p>
+          <p class="muted">La votación está activa desde la creación. Por defecto, las nuevas personas pueden entrar en cualquier ronda. Desde aquí puedes compartir, modificar datos, cerrar, reiniciar, eliminar el evento o expulsar participantes.</p>
           <div class="adminActions">
             <button id="copyInvite" type="button" class="btn secondary">Copiar invitación</button>
             <button id="copyCreatorAccess" type="button" class="btn secondary">Copiar acceso creador</button>
@@ -285,7 +285,7 @@
             <button id="openPublicScreen" type="button" class="btn secondary">Pantalla pública</button>
             <button id="startVoting" type="button" class="btn primary hidden">Iniciar votación</button>
             <button id="toggleEventStatus" type="button" class="btn secondary">Cerrar evento</button>
-            <button id="resetVotes" type="button" class="btn danger">Reiniciar votos</button>
+            <button id="resetVotes" type="button" class="btn danger">Reiniciar rondas y votos</button>
             <button id="deleteEvent" type="button" class="btn danger outline">Eliminar evento</button>
           </div>
 
@@ -341,7 +341,7 @@
 
               <label class="switch-row">
                 <input id="adminCloseEntryRound2" type="checkbox" />
-                <span>Cerrar entrada al empezar la ronda 2</span>
+                <span>Cerrar entrada al empezar la ronda 2 (opcional)</span>
               </label>
               <label>Ampliar caducidad
                 <select id="adminExtendHours">

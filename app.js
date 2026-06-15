@@ -301,7 +301,9 @@ function eventIsExpired(event) {
 
 function eventCanJoin(event) {
   if (!["waiting", "open"].includes(event?.status) || eventIsExpired(event)) return false;
-  if (event?.closeEntryRound2 && getRoundInfo(event).currentRound >= 2) return false;
+  // Por defecto se permite la entrada en cualquier ronda.
+  // Solo se bloquea desde la ronda 2 si el creador activa expresamente esa opción.
+  if (event?.closeEntryRound2 === true && getRoundInfo(event).currentRound >= 2) return false;
   return true;
 }
 
@@ -535,7 +537,7 @@ bind("createEvent", "click", async () => {
   const reason = getSelectedReason("eventReason", "eventReasonCustom");
   const theme = normalizeTheme($("eventTheme")?.value || "dark");
   const maxParticipants = Number($("maxParticipants")?.value || 0);
-  const closeEntryRound2 = Boolean($("closeEntryRound2")?.checked);
+  const closeEntryRound2 = $("closeEntryRound2") ? $("closeEntryRound2").checked === true : false;
   const soundEnabled = Boolean($("soundEnabled")?.checked);
   const creatorKey = normalizeCreatorKey($("creatorKeyCreate")?.value || "");
   const creatorKeyRepeat = normalizeCreatorKey($("creatorKeyCreateRepeat")?.value || "");
@@ -642,7 +644,7 @@ bind("joinEvent", "click", async () => {
 
     const event = eventSnap.val();
     if (!eventCanJoin(event)) {
-      $("joinError").textContent = "Este evento está cerrado, caducado o no permite nuevas entradas.";
+      $("joinError").textContent = "Este evento está cerrado o caducado. Si el evento está activo, revisa que el creador no haya cerrado la entrada.";
       return;
     }
 
@@ -884,7 +886,7 @@ bind("saveAdminSettings", "click", async () => {
   const reason = getSelectedReason("adminEventReason", "adminEventReasonCustom");
   const theme = normalizeTheme($("adminEventTheme")?.value || currentEvent?.theme || "dark");
   const maxParticipants = Number($("adminMaxParticipants")?.value || 0);
-  const closeEntryRound2 = Boolean($("adminCloseEntryRound2")?.checked);
+  const closeEntryRound2 = $("adminCloseEntryRound2") ? $("adminCloseEntryRound2").checked === true : false;
   const soundEnabled = Boolean($("adminSoundEnabled")?.checked);
   const extendHours = Number($("adminExtendHours")?.value || 0);
   const newCreatorKey = normalizeCreatorKey($("adminCreatorKeyNew")?.value || "");
@@ -1928,3 +1930,10 @@ if (firebaseIsConfigured && auth) {
     toast("No se pudo iniciar sesión anónima. Revisa Authentication en Firebase.");
   });
 }
+
+
+// MEJORA_DEFAULT_ENTRADA_ABIERTA
+// Evita que el navegador restaure marcada la opción de cerrar entrada en ronda 2.
+try {
+  if ($("closeEntryRound2")) $("closeEntryRound2").checked = false;
+} catch (_) {}
