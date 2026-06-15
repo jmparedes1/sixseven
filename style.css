@@ -1507,7 +1507,7 @@ input.hidden {
   isolation: isolate;
 }
 
-/* Logo e iconos integrados: no dependen de rutas externas */
-.inline-logo-sixseven{width:min(280px,72vw);height:auto;display:block;margin:0 auto;filter:drop-shadow(0 0 18px rgba(216,91,160,.22))}
-.inline-feature-icon{width:44px;height:44px;display:block;margin-bottom:.55rem;filter:drop-shadow(0 0 10px rgba(216,166,61,.18));flex:0 0 auto}
-.brand-badge .inline-logo-sixseven,.logo-pill .inline-logo-sixseven{width:210px;max-height:72px}
+/* RUTAS_ASSETS_CORRECTAS */
+.brand-logo,.logo-pill img,.brand-badge img{display:block;max-width:240px;height:auto;object-fit:contain}
+.featureIcon{display:block;width:44px;height:44px;object-fit:contain;margin-bottom:.55rem}
+.personAvatar img,.iconLabel img{display:block;object-fit:contain}

@@ -8,7 +8,7 @@
   "description": "Eventos privados con voto secreto y match mutuo.",
   "icons": [
     {
-      "src": "./assets/sixseven-logo.png",
+      "src": "assets/sixseven-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

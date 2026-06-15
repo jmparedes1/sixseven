@@ -1296,7 +1296,7 @@ async function generateStickersPdf() {
     toast("Generando PDF de pegatinas...");
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const logoDataUrl = await imageToDataUrl("./assets/sixseven-logo.png");
+    const logoDataUrl = await imageToDataUrl("assets/sixseven-logo.png");
 
     const pageW = 210;
     const pageH = 297;
@@ -1425,7 +1425,7 @@ async function generatePosterPdf() {
     toast("Generando cartel PDF con QR...");
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const logoDataUrl = await imageToDataUrl("./assets/sixseven-logo.png");
+    const logoDataUrl = await imageToDataUrl("assets/sixseven-logo.png");
     const qrDataUrl = await qrDataUrlForEvent(currentEventCode);
     const colors = stickerThemeColors(currentEvent?.theme || "dark");
 
@@ -1583,7 +1583,7 @@ function renderParticipants(participants, votes, canVote) {
       btn.title = participant.name || "Participante";
       btn.disabled = Boolean(myVote) || !canVote;
       btn.innerHTML = `
-        <span class="personAvatar"><img src="./assets/icon-user.svg" alt="" /></span>
+        <span class="personAvatar"><img src="assets/icon-user.svg" alt="" /></span>
         <span class="personBody">
           <strong class="personName">${escapeHtml(participant.name || "Participante")}</strong>
           <small class="personMeta">${escapeHtml(participantCardMeta(participantUid, myVote, canVote))}</small>
