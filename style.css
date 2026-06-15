@@ -1477,3 +1477,37 @@ input.hidden {
     radial-gradient(circle at 35% 20%, rgba(255,242,211,.15), transparent 32%),
     linear-gradient(145deg, rgba(216,166,61,.14), rgba(180,108,86,.08));
 }
+
+
+/* Corrección visibilidad iconos GitHub */
+.featureIcon,
+.personAvatar img,
+.iconLabel img,
+.mini-brand-logo,
+.brand-logo,
+.eventBrandLogo,
+.adminMiniLogo {
+  display: block;
+}
+
+.featureIcon {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.personAvatar img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.featureCard,
+.personAvatar {
+  isolation: isolate;
+}
+
+/* Logo e iconos integrados: no dependen de rutas externas */
+.inline-logo-sixseven{width:min(280px,72vw);height:auto;display:block;margin:0 auto;filter:drop-shadow(0 0 18px rgba(216,91,160,.22))}
+.inline-feature-icon{width:44px;height:44px;display:block;margin-bottom:.55rem;filter:drop-shadow(0 0 10px rgba(216,166,61,.18));flex:0 0 auto}
+.brand-badge .inline-logo-sixseven,.logo-pill .inline-logo-sixseven{width:210px;max-height:72px}

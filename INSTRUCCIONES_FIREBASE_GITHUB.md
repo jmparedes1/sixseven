@@ -1,65 +1,57 @@
 # INSTRUCCIONES FIREBASE Y GITHUB · sixseven
 
-## A. Subir a GitHub
+## 1. Subir a GitHub
 
 1. Descomprime este ZIP.
-2. Entra en tu repositorio de GitHub: `jmparedes1/sixseven`.
+2. Entra en tu repositorio `jmparedes1/sixseven`.
 3. Pulsa `Add file` > `Upload files`.
 4. Arrastra TODO el contenido descomprimido.
-5. Asegúrate de que `index.html`, `app.js`, `style.css` y `firebase-config.js` quedan en la raíz del repositorio.
+5. Comprueba que en la raíz del repositorio se ven directamente:
+   - `index.html`
+   - `app.js`
+   - `style.css`
+   - `firebase-config.js`
+   - `firebase.rules.json`
+   - carpeta `assets`
 6. Pulsa `Commit changes`.
 
-## B. Activar GitHub Pages
+No debe quedar dentro de una carpeta intermedia.
 
-1. En el repositorio entra en `Settings`.
-2. Pulsa `Pages`.
-3. En `Build and deployment` selecciona:
+## 2. GitHub Pages
+
+1. Entra en `Settings` > `Pages`.
+2. Selecciona:
    - Source: `Deploy from a branch`
    - Branch: `main`
    - Folder: `/root`
-4. Pulsa `Save`.
+3. Pulsa `Save`.
 
-La dirección será similar a:
-`https://jmparedes1.github.io/sixseven/`
-
-## C. Configurar Firebase Authentication
+## 3. Firebase Authentication
 
 1. Entra en Firebase.
-2. Abre el proyecto `sixseven-f8aaf`.
-3. Ve a `Authentication`.
-4. Entra en `Sign-in method`.
-5. Activa `Anonymous`.
+2. Proyecto: `sixseven-f8aaf`.
+3. Ve a `Authentication` > `Sign-in method`.
+4. Activa `Anonymous`.
 
-Esto es obligatorio para que cada participante tenga una identidad anónima segura.
+## 4. Firebase Realtime Database Rules
 
-## D. Configurar Firebase Realtime Database
+1. Entra en `Realtime Database` > `Rules`.
+2. Abre el archivo `firebase.rules.json` de este paquete.
+3. Copia TODO su contenido.
+4. Pégalo en Firebase.
+5. Pulsa `Publicar`.
 
-1. En Firebase, entra en `Realtime Database`.
-2. Entra en la pestaña `Rules`.
-3. Abre el archivo `firebase.rules.json` incluido en este paquete.
-4. Copia TODO el contenido.
-5. Pégalo en Firebase Rules.
-6. Pulsa `Publicar`.
+## 5. Si los iconos no se ven
 
-## E. Probar la app
-
-1. Abre la web publicada.
-2. Pulsa `Ctrl + F5`.
-3. Crea un evento.
-4. Guarda el código y la clave del creador.
-5. Entra desde otro navegador o desde incógnito.
-6. Prueba:
-   - crear evento,
-   - entrar con código,
-   - votar,
-   - match,
-   - chat privado,
-   - reabrir chat,
-   - PDF pegatinas,
-   - PDF cartel QR.
-
-## F. Aviso sobre PDF y QR
-
-La generación de PDF usa `jsPDF` desde internet.
-El cartel QR usa un servicio externo para generar el QR.
-Para esas funciones debe haber conexión a internet.
+1. Espera a que GitHub Pages termine.
+2. Abre la web.
+3. Pulsa `Ctrl + F5`.
+4. Comprueba que la carpeta `assets` está en la raíz del repositorio y contiene:
+   - `sixseven-logo.png`
+   - `icon-privacy.svg`
+   - `icon-rounds.svg`
+   - `icon-match.svg`
+   - `icon-chat.svg`
+   - `icon-creator.svg`
+   - `icon-user.svg`
+   - `icon-vote.svg`
