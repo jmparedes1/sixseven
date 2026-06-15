@@ -41,6 +41,7 @@ let hasAdminAccess = false;
 let roundTimerInterval = null;
 let activeChatUnsubscribe = null;
 let knownPrivateMatches = {};
+let adminSettingsDirty = false;
 const autoShownMatches = new Set();
 let lastRenderedRoundSignature = null;
 let roundNoticeTimer = null;
@@ -561,6 +562,25 @@ bind("eventTheme", "change", () => applyTheme($("eventTheme")?.value || "dark"))
 bind("adminEventReason", "change", () => syncCustomReason("adminEventReason", "adminEventReasonCustom"));
 bind("adminEventTheme", "change", () => applyTheme($("adminEventTheme")?.value || currentEvent?.theme || "dark"));
 
+// ADMIN_SAVE_DIRTY_BINDINGS
+[
+  "adminEventName",
+  "adminEventReason",
+  "adminEventReasonCustom",
+  "adminEventTheme",
+  "adminMaxParticipants",
+  "adminCloseEntryRound2",
+  "adminSoundEnabled",
+  "adminExtendHours",
+  "adminCreatorKeyNew",
+  "adminRecoveryQuestion",
+  "adminRecoveryAnswer"
+].forEach(id => {
+  bind(id, "input", markAdminSettingsDirty);
+  bind(id, "change", markAdminSettingsDirty);
+});
+
+
 document.querySelectorAll("[data-back]").forEach(btn => btn.addEventListener("click", () => {
   stopListeners();
   show("home");
@@ -754,7 +774,7 @@ bind("creatorAccess", "click", async () => {
     await set(ref(db, `adminSessions/${code}/${uid}`), {
       active: true,
       key,
-      claimedAt: serverTimestamp()
+      claimedAt: Date.now()
     });
     localStorage.setItem(adminStorageKey(code), key);
     saveLastCreatorAccess(code, key, currentEvent?.name || "Evento privado", currentEvent?.recoveryQuestion || "");
@@ -809,7 +829,7 @@ bind("recoverCreatorWithAnswer", "click", async () => {
     await set(ref(db, `adminSessions/${code}/${uid}`), {
       active: true,
       recoveryAnswer: answer,
-      claimedAt: serverTimestamp()
+      claimedAt: Date.now()
     });
     hasAdminAccess = true;
     const eventSnap = await get(ref(db, `events/${code}`));
@@ -862,7 +882,7 @@ bind("recoverLastCreator", "click", async () => {
     await set(ref(db, `adminSessions/${saved.code}/${uid}`), {
       active: true,
       key: saved.creatorKey,
-      claimedAt: serverTimestamp()
+      claimedAt: Date.now()
     });
     localStorage.setItem(adminStorageKey(saved.code), saved.creatorKey);
     hasAdminAccess = true;
@@ -927,52 +947,124 @@ bind("generatePosterPdf", "click", async () => {
 
 bind("saveAdminSettings", "click", async () => {
   if (!currentEventCode || !currentEvent || !isAdmin()) return;
+
+  const button = $("saveAdminSettings");
   const msg = $("adminSettingsMsg");
-  if (msg) msg.textContent = "";
+  if (msg) {
+    msg.dataset.state = "saving";
+    msg.textContent = "Guardando cambios...";
+  }
 
   const name = cleanName($("adminEventName")?.value || "");
   const reason = getSelectedReason("adminEventReason", "adminEventReasonCustom");
   const theme = normalizeTheme($("adminEventTheme")?.value || currentEvent?.theme || "dark");
-  const maxParticipants = Number($("adminMaxParticipants")?.value || 0);
+  const maxParticipants = readAdminMaxParticipants();
   const closeEntryRound2 = $("adminCloseEntryRound2") ? $("adminCloseEntryRound2").checked === true : false;
-  const soundEnabled = Boolean($("adminSoundEnabled")?.checked);
+  const soundEnabled = $("adminSoundEnabled") ? $("adminSoundEnabled").checked === true : false;
   const extendHours = Number($("adminExtendHours")?.value || 0);
   const newCreatorKey = normalizeCreatorKey($("adminCreatorKeyNew")?.value || "");
   const recoveryQuestion = cleanName($("adminRecoveryQuestion")?.value || "");
   const recoveryAnswer = normalizeRecoveryAnswer($("adminRecoveryAnswer")?.value || "");
 
-  if (!name) return toast("El nombre del evento no puede quedar vacío.");
-  if (!validReason(reason)) return toast("Selecciona o escribe un tipo de conexión válido.");
-  if (newCreatorKey && !validCreatorKey(newCreatorKey)) return toast("La nueva clave debe tener entre 6 y 32 caracteres: letras, números o guiones.");
-  if (recoveryAnswer && !validRecovery(recoveryQuestion, recoveryAnswer)) return toast("Para cambiar la respuesta, indica también una pregunta de recuperación válida.");
+  if (!name) {
+    if (msg) msg.textContent = "El nombre del evento no puede quedar vacío.";
+    return toast("El nombre del evento no puede quedar vacío.");
+  }
+  if (!validReason(reason)) {
+    if (msg) msg.textContent = "Selecciona o escribe un tipo de conexión válido.";
+    return toast("Selecciona o escribe un tipo de conexión válido.");
+  }
+  if (maxParticipants < 0 || maxParticipants > 100) {
+    if (msg) msg.textContent = "El máximo de participantes debe estar entre 0 y 100.";
+    return toast("El máximo de participantes debe estar entre 0 y 100.");
+  }
+  if (newCreatorKey && !validCreatorKey(newCreatorKey)) {
+    if (msg) msg.textContent = "La nueva clave debe tener entre 6 y 32 caracteres.";
+    return toast("La nueva clave debe tener entre 6 y 32 caracteres: letras, números o guiones.");
+  }
+  if (recoveryAnswer && !validRecovery(recoveryQuestion, recoveryAnswer)) {
+    if (msg) msg.textContent = "Para cambiar la respuesta, indica también una pregunta de recuperación válida.";
+    return toast("Para cambiar la respuesta, indica también una pregunta de recuperación válida.");
+  }
 
   try {
-    const eventUpdates = { name, reason, theme, maxParticipants, closeEntryRound2, soundEnabled, recoveryQuestion };
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Guardando...";
+    }
+
+    const eventUpdates = {
+      name,
+      reason,
+      theme,
+      maxParticipants,
+      closeEntryRound2,
+      soundEnabled,
+      recoveryQuestion
+    };
+
     if (extendHours > 0) {
       const base = Math.max(Date.now(), Number(currentEvent.expiresAt || Date.now()));
       eventUpdates.expiresAt = base + extendHours * 60 * 60 * 1000;
     }
-    await update(ref(db, `events/${currentEventCode}`), eventUpdates);
+
+    const updates = {};
+    Object.entries(eventUpdates).forEach(([key, value]) => {
+      updates[`events/${currentEventCode}/${key}`] = value;
+    });
 
     if (newCreatorKey) {
-      await update(ref(db, `eventSecrets/${currentEventCode}`), { creatorKey: newCreatorKey });
-      await update(ref(db, `adminSessions/${currentEventCode}/${uid}`), { key: newCreatorKey, active: true, claimedAt: serverTimestamp() });
-      localStorage.setItem(adminStorageKey(currentEventCode), newCreatorKey);
-      saveLastCreatorAccess(currentEventCode, newCreatorKey, name || currentEvent?.name || "Evento privado", currentEvent?.recoveryQuestion || "");
-      $("adminCreatorKeyNew").value = "";
+      updates[`eventSecrets/${currentEventCode}/creatorKey`] = newCreatorKey;
+      updates[`adminSessions/${currentEventCode}/${uid}/key`] = newCreatorKey;
+      updates[`adminSessions/${currentEventCode}/${uid}/active`] = true;
+      updates[`adminSessions/${currentEventCode}/${uid}/claimedAt`] = Date.now();
     }
 
     if (recoveryAnswer) {
-      await update(ref(db, `eventSecrets/${currentEventCode}`), { recoveryAnswer });
-      $("adminRecoveryAnswer").value = "";
+      updates[`eventSecrets/${currentEventCode}/recoveryAnswer`] = recoveryAnswer;
     }
-    saveLastCreatorAccess(currentEventCode, localStorage.getItem(adminStorageKey(currentEventCode)) || "[clave no disponible]", name || currentEvent?.name || "Evento privado", recoveryQuestion || "");
+
+    await update(ref(db), updates);
+
+    currentEvent = { ...currentEvent, ...eventUpdates };
+    applyTheme(theme);
+
+    if (newCreatorKey) {
+      localStorage.setItem(adminStorageKey(currentEventCode), newCreatorKey);
+      saveLastCreatorAccess(currentEventCode, newCreatorKey, name || "Evento privado", recoveryQuestion || "");
+      if ($("adminCreatorKeyNew")) $("adminCreatorKeyNew").value = "";
+    }
+
+    if (recoveryAnswer && $("adminRecoveryAnswer")) $("adminRecoveryAnswer").value = "";
+    saveLastCreatorAccess(
+      currentEventCode,
+      localStorage.getItem(adminStorageKey(currentEventCode)) || "[clave no disponible]",
+      name || "Evento privado",
+      recoveryQuestion || ""
+    );
+
     if ($("adminExtendHours")) $("adminExtendHours").value = "0";
-    if (msg) msg.textContent = "Cambios guardados.";
+
+    clearAdminSettingsDirty();
+    populateAdminSettings(currentEvent);
+
+    if (msg) {
+      msg.dataset.state = "saved";
+      msg.textContent = "Cambios guardados correctamente.";
+    }
     toast("Cambios del evento guardados.");
   } catch (error) {
     console.error("Error guardando ajustes:", error);
+    if (msg) {
+      msg.dataset.state = "error";
+      msg.textContent = "No se pudieron guardar los cambios. Revisa Firebase Rules o tu acceso de creador.";
+    }
     toast("No se pudieron guardar los cambios. Revisa las reglas de Firebase.");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Guardar cambios del evento";
+    }
   }
 });
 
@@ -1033,7 +1125,7 @@ async function claimStoredAdminAccess(code) {
     await set(ref(db, `adminSessions/${code}/${uid}`), {
       active: true,
       key: storedKey,
-      claimedAt: serverTimestamp()
+      claimedAt: Date.now()
     });
   } catch (error) {
     console.warn("No se pudo recuperar automáticamente el acceso de creador:", error);
@@ -1530,6 +1622,32 @@ async function generatePosterPdf() {
 }
 
 
+
+function markAdminSettingsDirty() {
+  adminSettingsDirty = true;
+  const msg = $("adminSettingsMsg");
+  if (msg && msg.dataset.state !== "saving") msg.textContent = "Hay cambios sin guardar.";
+}
+
+function clearAdminSettingsDirty() {
+  adminSettingsDirty = false;
+  const msg = $("adminSettingsMsg");
+  if (msg) {
+    delete msg.dataset.state;
+  }
+}
+
+function shouldSkipAdminPopulate() {
+  const active = document.activeElement;
+  return Boolean(adminSettingsDirty || active?.closest?.(".adminSettingsBox"));
+}
+
+function readAdminMaxParticipants() {
+  const raw = $("adminMaxParticipants")?.value;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : Number(currentEvent?.maxParticipants || 67);
+}
+
 function renderAdminPanel(isCreator, event, participants = {}, votes = {}) {
   const panel = $("adminPanel");
   panel.classList.toggle("hidden", !isCreator);
@@ -1549,16 +1667,25 @@ function renderAdminPanel(isCreator, event, participants = {}, votes = {}) {
 }
 
 function populateAdminSettings(event) {
-  if ($("adminEventName") && document.activeElement !== $("adminEventName")) $("adminEventName").value = event.name || "";
+  if (!event) return;
+  if (shouldSkipAdminPopulate()) return;
+
+  if ($("adminEventName")) $("adminEventName").value = event.name || "";
   if ($("adminEventReason")) {
     $("adminEventReason").value = VALID_REASONS.includes(event.reason) ? event.reason : "__custom__";
     syncCustomReason("adminEventReason", "adminEventReasonCustom", event.reason || "");
   }
   if ($("adminEventTheme")) $("adminEventTheme").value = normalizeTheme(event.theme || "dark");
-  if ($("adminMaxParticipants")) $("adminMaxParticipants").value = String(Number(event.maxParticipants || 0));
-  if ($("adminCloseEntryRound2")) $("adminCloseEntryRound2").checked = Boolean(event.closeEntryRound2);
-  if ($("adminSoundEnabled")) $("adminSoundEnabled").checked = Boolean(event.soundEnabled);
-  if ($("adminRecoveryQuestion") && document.activeElement !== $("adminRecoveryQuestion")) $("adminRecoveryQuestion").value = event.recoveryQuestion || "";
+
+  if ($("adminMaxParticipants")) {
+    const value = String(Number(event.maxParticipants ?? 67));
+    const optionExists = Array.from($("adminMaxParticipants").options || []).some(option => option.value === value);
+    $("adminMaxParticipants").value = optionExists ? value : "0";
+  }
+
+  if ($("adminCloseEntryRound2")) $("adminCloseEntryRound2").checked = event.closeEntryRound2 === true;
+  if ($("adminSoundEnabled")) $("adminSoundEnabled").checked = event.soundEnabled === true;
+  if ($("adminRecoveryQuestion")) $("adminRecoveryQuestion").value = event.recoveryQuestion || "";
 }
 
 function renderAdminParticipants(participants = {}, votes = {}) {

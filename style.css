@@ -2091,3 +2091,31 @@ body.theme-gold .accessGateBox {
 #adminEventTheme {
   font-weight: 800;
 }
+
+
+/* ADMIN_GUARDADO_CORREGIDO */
+#adminSettingsMsg {
+  min-height: 1.4rem;
+  font-weight: 800;
+}
+
+#adminSettingsMsg[data-state="saving"] {
+  color: #bfeeff;
+}
+
+#adminSettingsMsg[data-state="saved"] {
+  color: #8ff0b2;
+}
+
+#adminSettingsMsg[data-state="error"] {
+  color: #ffb0b8;
+}
+
+.adminSettingsBox {
+  position: relative;
+}
+
+.adminSettingsBox:focus-within {
+  border-color: rgba(111, 213, 255, .34);
+  box-shadow: 0 0 0 3px rgba(111, 213, 255, .08);
+}
