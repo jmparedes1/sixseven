@@ -1,7 +1,7 @@
 {
   "name": "sixseven",
   "short_name": "sixseven",
-  "start_url": "./",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#0b0711",
   "theme_color": "#0b0711",

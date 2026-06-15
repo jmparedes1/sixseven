@@ -208,3 +208,90 @@ Características:
 - Funciona directamente en GitHub Pages usando jsPDF desde CDN.
 
 Para usarlo, entra como creador, espera a que haya participantes y pulsa **PDF pegatinas**.
+
+
+## Chat privado en la ventana de match
+
+Esta versión convierte la ventana de **Match privado** en un pequeño chat privado entre las dos personas que se han elegido mutuamente.
+
+Características:
+
+- El chat aparece dentro de la ventana del match.
+- Solo las dos personas del match pueden leer y escribir.
+- Cada mensaje queda asociado al evento y al match correspondiente.
+- Los mensajes se sincronizan en tiempo real con Firebase.
+- Las reglas de Firebase incluyen un nuevo nodo `chats` protegido por miembros del chat.
+
+Después de subir esta versión a GitHub, copia el contenido de `firebase.rules.json` en Firebase Realtime Database > Rules y pulsa **Publicar**.
+
+
+## Reabrir chat del match
+
+Esta versión añade la sección **Tus matches / Chats privados** dentro del evento.  
+Si una persona cierra la ventana del match, puede volver a abrir el chat privado desde esa sección.
+
+Cambios principales:
+
+- Lista de matches privados del participante.
+- Botón **Abrir chat** para reabrir la conversación.
+- Cerrar la ventana del match ya no borra el acceso al chat.
+- El chat sigue protegido por las reglas de Firebase.
+
+
+## Tipos de conexión ampliados y personalizados
+
+El desplegable de tipo de conexión incluye ahora:
+
+- Una conversación
+- Un café
+- Una copa
+- Un baile
+- Una cena
+- Una cita
+- 7 minutos a solas
+- Una noche
+- Personalizada
+
+Si el creador elige **Personalizada**, aparece un campo para escribir el tipo de conexión que quiera. También puede modificarlo después desde el panel del creador.
+
+Recuerda actualizar `firebase.rules.json` en Firebase, porque ahora el campo `reason` acepta textos personalizados de 3 a 40 caracteres.
+
+
+## Cinco mejoras funcionales añadidas
+
+Esta versión incorpora:
+
+1. **Cerrar entrada al empezar la ronda 2**  
+   Activado por defecto al crear evento. El creador puede modificarlo desde el panel.
+
+2. **Salir y borrar mi participación**  
+   Cada participante puede borrar su alias, votos y chats asociados desde su pantalla.
+
+3. **Aviso general del creador**  
+   El creador puede enviar mensajes visibles para todas las personas del evento.
+
+4. **Reacciones rápidas en el chat privado**  
+   En el chat de match aparecen botones rápidos como “Hola”, “¿Tomamos algo?” y “Me alegra el match”.
+
+5. **Generar cartel PDF con QR**  
+   El creador puede generar un cartel A4 con logo, nombre del evento, código y QR de acceso.
+
+Recuerda publicar de nuevo `firebase.rules.json` en Firebase Realtime Database > Rules.
+
+
+## Mejoras visuales y de experiencia añadidas
+
+Esta versión incorpora:
+
+- **Temporizador visual con círculo animado** en la cabecera del evento.
+- **Aviso de nueva ronda** cuando se abre una nueva votación.
+- **Portada inicial más limpia**, con menos texto y bloques visuales.
+- **Tarjetas premium de participantes** en lugar de botones simples.
+- **Iconos propios** en formato SVG para privacidad, rondas, match, chat y creador.
+
+
+## VERSIÓN FINAL COMPLETA
+
+Integra las últimas mejoras: modo 6×7, temporizador circular animado, aviso de nueva ronda, pantalla inicial limpia, tarjetas premium, iconos premium dorado extremo, panel del creador, recuperación, estilos visuales, tipos personalizados, chat privado con reapertura, PDF de pegatinas, PDF de cartel QR, avisos del creador, borrado de participación y cierre automático de entrada en ronda 2.
+
+Recuerda publicar `firebase.rules.json` en Firebase Realtime Database > Rules.
