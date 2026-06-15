@@ -89,6 +89,15 @@
         <h2 id="createTitle">Configura el evento</h2>
         <p class="section-intro">La votación se abrirá automáticamente al crear el evento. Guarda la clave de creador para volver a administrar la sala más tarde.</p>
 
+        <div class="accessGateBox">
+          <h3>Acceso privado de creación</h3>
+          <p class="muted">Introduce el código de acceso general para poder crear una nueva sala.</p>
+          <label>Código de acceso
+            <input id="globalAdminCodeCreate" type="password" placeholder="Código de acceso" maxlength="32" autocomplete="off" />
+          </label>
+          <p id="globalAdminCodeCreateError" class="error" aria-live="polite"></p>
+        </div>
+
         <div class="form-grid">
           <label>Nombre del evento
             <input id="eventName" type="text" placeholder="Ej.: Cena privada del viernes" maxlength="80" autocomplete="off" />
@@ -133,9 +142,10 @@
             <select id="maxParticipants">
               <option value="4">4 personas</option>
               <option value="6">6 personas</option>
-              <option value="8" selected>8 personas</option>
+              <option value="8">8 personas</option>
               <option value="10">10 personas</option>
               <option value="12">12 personas</option>
+              <option value="67" selected>67 personas</option>
               <option value="0">Sin límite</option>
             </select>
           </label>
@@ -201,7 +211,11 @@
 
         <div id="lastCreatorBox" class="creatorAccessBox hidden">
           <h3>Último evento creado en este dispositivo</h3>
-          <p class="muted">Si creaste un evento desde este navegador, puedes recuperar el acceso sin volver a escribir la clave.</p>
+          <p class="muted">Si creaste un evento desde este navegador, puedes recuperar el acceso introduciendo el código de acceso general.</p>
+          <label>Código de acceso general
+            <input id="globalAdminCodeRecover" type="password" placeholder="Código de acceso" maxlength="32" autocomplete="off" />
+          </label>
+          <p id="globalAdminCodeRecoverError" class="error" aria-live="polite"></p>
           <div id="lastCreatorInfo" class="savedAccessInfo"></div>
           <button id="recoverLastCreator" type="button" class="btn secondary full">Recuperar mi último evento creado</button>
           <button id="clearLastCreator" type="button" class="btn ghost full">Borrar acceso guardado en este dispositivo</button>
@@ -209,7 +223,10 @@
 
         <div class="creatorAccessBox">
           <h3>Acceso del creador</h3>
-          <p class="muted">Si creaste el evento y saliste de la pantalla, introduce el código y tu clave de creador para volver a administrar la sala.</p>
+          <p class="muted">Si creaste el evento y saliste de la pantalla, introduce el código, tu clave de creador y el código de acceso general para volver a administrar la sala.</p>
+          <label>Código de acceso general
+            <input id="globalAdminCodeAccess" type="password" placeholder="Código de acceso" maxlength="32" autocomplete="off" />
+          </label>
           <label>Código del evento
             <input id="creatorCode" type="text" placeholder="Ej.: A7K9Q2M8XR" maxlength="12" autocomplete="one-time-code" />
           </label>

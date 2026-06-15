@@ -2040,3 +2040,54 @@ body.theme-white .adminPanel textarea {
   background: rgba(5, 20, 34, .68);
   border-color: rgba(111, 213, 255, .22);
 }
+
+
+/* ACCESO_ADMIN_ESTILOS_GLOBALES */
+.accessGateBox {
+  margin: 1.15rem 0 1.25rem;
+  padding: 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(240, 201, 135, .22);
+  background:
+    radial-gradient(circle at top left, rgba(240,201,135,.10), transparent 38%),
+    rgba(255,255,255,.045);
+}
+
+.accessGateBox h3 {
+  margin: 0 0 .35rem;
+  font-size: 1.05rem;
+}
+
+.accessGateBox label {
+  margin-bottom: .4rem;
+}
+
+.accessGateBox input[type="password"],
+.creatorAccessBox input[type="password"] {
+  letter-spacing: .08em;
+}
+
+body.theme-white .accessGateBox {
+  background: rgba(255,255,255,.68);
+  border-color: rgba(33,25,37,.12);
+}
+
+body.theme-night .accessGateBox {
+  border-color: rgba(157,243,255,.22);
+  background:
+    radial-gradient(circle at top left, rgba(0,212,255,.12), transparent 38%),
+    rgba(255,255,255,.045);
+}
+
+body.theme-gold .accessGateBox {
+  border-color: rgba(255,217,120,.28);
+  background:
+    radial-gradient(circle at top left, rgba(255,217,120,.14), transparent 38%),
+    rgba(255,255,255,.045);
+}
+
+/* El estilo elegido por el creador se aplica inmediatamente a toda la interfaz. */
+#eventTheme,
+#adminEventTheme {
+  font-weight: 800;
+}

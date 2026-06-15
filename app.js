@@ -69,6 +69,44 @@ const ROUND_DURATION_MS = 7 * 60 * 1000;
 const TOTAL_ROUNDS = 6;
 const TOTAL_EVENT_DURATION_MS = ROUND_DURATION_MS * TOTAL_ROUNDS;
 
+// Código de acceso general para crear eventos y entrar como administrador.
+// No se guarda la contraseña en el HTML: se compara con SHA-256.
+const GLOBAL_ADMIN_ACCESS_HASH = "8e76c0308d7336c906bd5d6c460afca6e90e3e0cdbf7445c86e4c9054053456d";
+
+async function sha256Hex(value = "") {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(String(value));
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function validateGlobalAdminAccess(inputId, errorId) {
+  const input = $(inputId);
+  const error = $(errorId);
+  const value = input?.value || "";
+  if (error) error.textContent = "";
+  if (!value) {
+    if (error) error.textContent = "Introduce el código de acceso general.";
+    input?.focus();
+    return false;
+  }
+  try {
+    const hash = await sha256Hex(value.trim());
+    if (hash !== GLOBAL_ADMIN_ACCESS_HASH) {
+      if (error) error.textContent = "Código de acceso incorrecto.";
+      input?.focus();
+      input?.select?.();
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("Error comprobando código de acceso:", err);
+    if (error) error.textContent = "No se pudo comprobar el código de acceso.";
+    return false;
+  }
+}
+
+
 function bind(id, event, handler) {
   const el = $(id);
   if (el) el.addEventListener(event, handler);
@@ -499,7 +537,10 @@ function setupInviteFromUrl() {
   }
 }
 
-bind("showCreate", "click", () => show("createView"));
+bind("showCreate", "click", () => {
+  applyTheme($("eventTheme")?.value || "dark");
+  show("createView");
+});
 bind("showJoin", "click", () => show("joinView"));
 bind("aliasBtn", "click", () => {
   $("participantName").value = randomAlias();
@@ -507,14 +548,18 @@ bind("aliasBtn", "click", () => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-  applyTheme("dark");
+  applyTheme($("eventTheme")?.value || "dark");
   renderLastCreatorAccessBox();
   syncCustomReason("eventReason", "eventReasonCustom");
   syncCustomReason("adminEventReason", "adminEventReasonCustom");
+  const maxInput = $("maxParticipants");
+  if (maxInput && (!maxInput.value || maxInput.value === "8" || maxInput.value === "0")) maxInput.value = "67";
 });
 
 bind("eventReason", "change", () => syncCustomReason("eventReason", "eventReasonCustom"));
+bind("eventTheme", "change", () => applyTheme($("eventTheme")?.value || "dark"));
 bind("adminEventReason", "change", () => syncCustomReason("adminEventReason", "adminEventReasonCustom"));
+bind("adminEventTheme", "change", () => applyTheme($("adminEventTheme")?.value || currentEvent?.theme || "dark"));
 
 document.querySelectorAll("[data-back]").forEach(btn => btn.addEventListener("click", () => {
   stopListeners();
@@ -533,6 +578,7 @@ if (!firebaseIsConfigured) {
 
 bind("createEvent", "click", async () => {
   const button = $("createEvent");
+  if (!(await validateGlobalAdminAccess("globalAdminCodeCreate", "globalAdminCodeCreateError"))) return;
   const name = cleanName($("eventName").value);
   const reason = getSelectedReason("eventReason", "eventReasonCustom");
   const theme = normalizeTheme($("eventTheme")?.value || "dark");
@@ -691,6 +737,7 @@ bind("joinEvent", "click", async () => {
 
 bind("creatorAccess", "click", async () => {
   const button = $("creatorAccess");
+  if (!(await validateGlobalAdminAccess("globalAdminCodeAccess", "creatorAccessError"))) return;
   const code = cleanCode($("creatorCode")?.value || $("joinCode")?.value || currentEventCode || "");
   const key = normalizeCreatorKey($("creatorKey")?.value || "");
   $("creatorAccessError").textContent = "";
@@ -807,6 +854,7 @@ bind("generateStickersPdf", "click", async () => {
 
 
 bind("recoverLastCreator", "click", async () => {
+  if (!(await validateGlobalAdminAccess("globalAdminCodeRecover", "globalAdminCodeRecoverError"))) return;
   const saved = getLastCreatorAccess();
   if (!saved) return toast("No hay ningún acceso de creador guardado en este dispositivo.");
   await ensureAuth();
