@@ -2119,3 +2119,17 @@ body.theme-gold .accessGateBox {
   border-color: rgba(111, 213, 255, .34);
   box-shadow: 0 0 0 3px rgba(111, 213, 255, .08);
 }
+
+
+/* ESTILO_VISUAL_FIJO */
+#adminEventTheme {
+  border-color: rgba(111, 213, 255, .30);
+}
+
+#adminSettingsMsg[data-state="saved"]::before {
+  content: "✓ ";
+}
+
+#adminSettingsMsg[data-state="error"]::before {
+  content: "⚠ ";
+}

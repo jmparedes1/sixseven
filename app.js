@@ -42,6 +42,9 @@ let roundTimerInterval = null;
 let activeChatUnsubscribe = null;
 let knownPrivateMatches = {};
 let adminSettingsDirty = false;
+  pendingThemeOverride = null;
+let pendingThemeOverride = null;
+let pendingThemeSaveTimer = null;
 const autoShownMatches = new Set();
 let lastRenderedRoundSignature = null;
 let roundNoticeTimer = null;
@@ -127,6 +130,45 @@ function applyTheme(theme = "dark") {
   document.body.classList.remove(...VALID_THEMES.map(t => `theme-${t}`));
   document.body.classList.add(`theme-${selected}`);
   document.documentElement.setAttribute("data-theme", selected);
+}
+
+
+function getThemeForRender(event = currentEvent) {
+  if (pendingThemeOverride && isAdmin(event)) return normalizeTheme(pendingThemeOverride);
+  return normalizeTheme(event?.theme || $("eventTheme")?.value || "dark");
+}
+
+function setPendingThemeOverride(theme) {
+  pendingThemeOverride = normalizeTheme(theme);
+  applyTheme(pendingThemeOverride);
+  if ($("currentTheme")) $("currentTheme").textContent = `Estilo: ${THEME_LABELS[pendingThemeOverride]}`;
+}
+
+async function saveAdminThemeImmediately(theme) {
+  if (!currentEventCode || !currentEvent || !isAdmin()) return;
+  const selected = normalizeTheme(theme);
+  setPendingThemeOverride(selected);
+
+  if (pendingThemeSaveTimer) clearTimeout(pendingThemeSaveTimer);
+  pendingThemeSaveTimer = setTimeout(async () => {
+    try {
+      await update(ref(db, `events/${currentEventCode}`), { theme: selected });
+      currentEvent = { ...currentEvent, theme: selected };
+      pendingThemeOverride = null;
+      if ($("adminSettingsMsg")) {
+        $("adminSettingsMsg").dataset.state = "saved";
+        $("adminSettingsMsg").textContent = "Estilo visual guardado.";
+      }
+      toast("Estilo visual guardado.");
+    } catch (error) {
+      console.error("Error guardando estilo visual:", error);
+      if ($("adminSettingsMsg")) {
+        $("adminSettingsMsg").dataset.state = "error";
+        $("adminSettingsMsg").textContent = "No se pudo guardar el estilo visual.";
+      }
+      toast("No se pudo guardar el estilo visual.");
+    }
+  }, 350);
 }
 
 function cleanCode(value = "") {
@@ -560,7 +602,12 @@ window.addEventListener("DOMContentLoaded", () => {
 bind("eventReason", "change", () => syncCustomReason("eventReason", "eventReasonCustom"));
 bind("eventTheme", "change", () => applyTheme($("eventTheme")?.value || "dark"));
 bind("adminEventReason", "change", () => syncCustomReason("adminEventReason", "adminEventReasonCustom"));
-bind("adminEventTheme", "change", () => applyTheme($("adminEventTheme")?.value || currentEvent?.theme || "dark"));
+bind("adminEventTheme", "change", () => {
+  const selected = normalizeTheme($("adminEventTheme")?.value || currentEvent?.theme || "dark");
+  markAdminSettingsDirty();
+  applyTheme(selected);
+  saveAdminThemeImmediately(selected);
+});
 
 // ADMIN_SAVE_DIRTY_BINDINGS
 [
@@ -1027,6 +1074,7 @@ bind("saveAdminSettings", "click", async () => {
     await update(ref(db), updates);
 
     currentEvent = { ...currentEvent, ...eventUpdates };
+    pendingThemeOverride = null;
     applyTheme(theme);
 
     if (newCreatorKey) {
@@ -1186,6 +1234,8 @@ function statusText(event) {
 }
 
 function renderEvent(event) {
+  // CLEAR_PENDING_THEME_ON_RENDER
+  if (pendingThemeOverride && event?.theme === pendingThemeOverride) pendingThemeOverride = null;
   const canVote = eventCanVote(event);
   const canJoin = eventCanJoin(event);
   const isCreator = isAdmin(event);
@@ -1199,8 +1249,9 @@ function renderEvent(event) {
 
   $("currentTitle").textContent = event.name || "Evento";
   $("currentReason").textContent = event.reason || "";
-  applyTheme(event.theme || "dark");
-  if ($("currentTheme")) $("currentTheme").textContent = `Estilo: ${THEME_LABELS[normalizeTheme(event.theme)]}`;
+  const renderTheme = getThemeForRender(event);
+  applyTheme(renderTheme);
+  if ($("currentTheme")) $("currentTheme").textContent = `Estilo: ${THEME_LABELS[renderTheme]}`;
   $("votesCount").textContent = votedCount;
   $("participantCount").textContent = max > 0 ? `${Object.keys(participants).length}/${max}` : Object.keys(participants).length;
   $("eventStatus").textContent = statusText(event);
