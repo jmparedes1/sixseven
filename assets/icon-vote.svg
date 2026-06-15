@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><defs>
+<linearGradient id="gold" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#FFF2C7"/><stop offset="0.45" stop-color="#D8A63D"/><stop offset="1" stop-color="#9B5D3B"/>
+</linearGradient>
+<linearGradient id="rose" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#FFE8E0"/><stop offset="0.5" stop-color="#D98473"/><stop offset="1" stop-color="#A95742"/>
+</linearGradient>
+</defs><circle cx="32" cy="32" r="27" stroke="url(#gold)" stroke-width="1.8"/><circle cx="32" cy="32" r="23" stroke="url(#rose)" stroke-width="1" opacity="0.75"/><circle cx="32" cy="32" r="15.5" stroke="url(#gold)" stroke-width="2.8"/><path d="M25 32.2 30 37l9.2-9.8" stroke="url(#rose)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
