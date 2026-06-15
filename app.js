@@ -59,11 +59,11 @@ const VALID_REASONS = [
 ];
 const VALID_THEMES = ["dark", "passion", "white", "night", "gold"];
 const THEME_LABELS = {
-  dark: "Elegante oscuro",
-  passion: "Rojo pasión",
-  white: "Minimal blanco",
-  night: "Fiesta nocturna",
-  gold: "Premium dorado"
+  dark: "Elegante oscuro · premium",
+  passion: "Rojo pasión · intenso",
+  white: "Minimal blanco · claro",
+  night: "Fiesta nocturna · neón",
+  gold: "Premium dorado · lujo"
 };
 const ROUND_DURATION_MS = 7 * 60 * 1000;
 const TOTAL_ROUNDS = 6;
@@ -536,7 +536,7 @@ bind("createEvent", "click", async () => {
   const name = cleanName($("eventName").value);
   const reason = getSelectedReason("eventReason", "eventReasonCustom");
   const theme = normalizeTheme($("eventTheme")?.value || "dark");
-  const maxParticipants = Number($("maxParticipants")?.value || 0);
+  const maxParticipants = Number($("maxParticipants")?.value || 67);
   const closeEntryRound2 = $("closeEntryRound2") ? $("closeEntryRound2").checked === true : false;
   const soundEnabled = Boolean($("soundEnabled")?.checked);
   const creatorKey = normalizeCreatorKey($("creatorKeyCreate")?.value || "");
@@ -1937,3 +1937,18 @@ if (firebaseIsConfigured && auth) {
 try {
   if ($("closeEntryRound2")) $("closeEntryRound2").checked = false;
 } catch (_) {}
+
+
+// MEJORA_MAX_PARTICIPANTES_67
+// Valor por defecto para nuevos eventos.
+try {
+  const maxInput = $("maxParticipants");
+  if (maxInput && (!maxInput.value || maxInput.value === "0" || maxInput.value === "8")) {
+    maxInput.value = "67";
+  }
+} catch (_) {}
+
+
+// MEJORA_ESTILOS_VISUALES_REPASADOS
+// Los estilos visuales disponibles son:
+// dark, passion, white, night y gold.

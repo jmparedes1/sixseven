@@ -1593,3 +1593,450 @@ input.hidden {
 .adminParticipants > div {
   border-radius: 16px;
 }
+
+
+/* ADMIN_COLOR_DIFERENCIADO_67
+   El panel de administración usa una gama azul/petróleo distinta
+   a la pantalla de participante para identificar claramente el modo creador. */
+.adminPanel {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(0, 195, 255, .16), transparent 34%),
+    radial-gradient(circle at 100% 20%, rgba(74, 144, 226, .14), transparent 38%),
+    linear-gradient(145deg, rgba(10, 34, 52, .94), rgba(18, 26, 45, .92)) !important;
+  border: 1px solid rgba(111, 213, 255, .28) !important;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, .34),
+    0 0 0 1px rgba(111, 213, 255, .08),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+.adminPanel::before {
+  content: "MODO CREADOR";
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  width: fit-content;
+  margin-bottom: .65rem;
+  padding: .34rem .7rem;
+  border-radius: 999px;
+  background: rgba(111, 213, 255, .12);
+  border: 1px solid rgba(111, 213, 255, .28);
+  color: #bfeeff;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.adminPanel .eyebrow,
+.adminPanel h3,
+.adminPanel h4 {
+  color: #dff7ff;
+}
+
+.adminPanel .muted,
+.adminPanel small,
+.adminPanel .field-help {
+  color: rgba(224, 248, 255, .72);
+}
+
+.adminPanel input,
+.adminPanel select,
+.adminPanel textarea {
+  background: rgba(5, 20, 34, .68);
+  border-color: rgba(111, 213, 255, .22);
+}
+
+.adminPanel input:focus,
+.adminPanel select:focus,
+.adminPanel textarea:focus {
+  border-color: rgba(111, 213, 255, .55);
+  box-shadow: 0 0 0 3px rgba(111, 213, 255, .12);
+}
+
+.adminPanel .btn.secondary {
+  border-color: rgba(111, 213, 255, .26);
+  background: rgba(111, 213, 255, .08);
+}
+
+.adminPanel .btn.secondary:hover {
+  background: rgba(111, 213, 255, .14);
+  border-color: rgba(111, 213, 255, .42);
+}
+
+.adminPanel .adminNoticeBox,
+.adminPanel .adminSettingsBox,
+.adminPanel .adminParticipantsBox,
+.adminPanel .qrBox {
+  background:
+    radial-gradient(circle at top left, rgba(111, 213, 255, .10), transparent 35%),
+    rgba(5, 20, 34, .38);
+  border-color: rgba(111, 213, 255, .18);
+}
+
+.adminPanel .adminMiniLogo {
+  background: rgba(111, 213, 255, .10);
+  border-color: rgba(111, 213, 255, .24);
+}
+
+.adminPanel .switch-row {
+  background: rgba(111, 213, 255, .07);
+  border-color: rgba(111, 213, 255, .18);
+}
+
+.adminPanel .switch-row input[type="checkbox"] {
+  accent-color: #6fd5ff;
+}
+
+
+/* ESTILOS_VISUALES_REPASADOS_SIXSEVEN
+   Revisión integral de los cinco estilos: elegante oscuro, rojo pasión,
+   minimal blanco, fiesta nocturna y premium dorado.
+   El panel admin mantiene su color azul/petróleo diferenciado. */
+
+body {
+  transition: background .35s ease, color .25s ease;
+}
+
+.glass-card,
+.panel,
+.home-card,
+.vote-panel,
+.stats,
+.event-top,
+.finalResults,
+.announcementsBox,
+.publicScreen {
+  transition:
+    background .28s ease,
+    border-color .28s ease,
+    box-shadow .28s ease,
+    color .22s ease;
+}
+
+/* 1. Elegante oscuro · premium */
+body.theme-dark {
+  color-scheme: dark;
+  --bg: #090611;
+  --panel: rgba(19, 13, 30, .82);
+  --panel-strong: rgba(26, 18, 40, .94);
+  --panel-2: rgba(255,255,255,.065);
+  --text: #fff7fb;
+  --muted: #c7b7cf;
+  --soft: #8f7d9c;
+  --line: rgba(255,255,255,.14);
+  --primary: #d84b74;
+  --primary-2: #8c5cff;
+  --gold: #f0c987;
+  --danger: #ff5f6d;
+  --ok: #5ee6a8;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(216, 75, 116, .32), transparent 31rem),
+    radial-gradient(circle at 86% 18%, rgba(140, 92, 255, .25), transparent 30rem),
+    radial-gradient(circle at 50% 100%, rgba(240, 201, 135, .12), transparent 34rem),
+    linear-gradient(145deg, #08050d, #130d1d 52%, #08050d);
+}
+
+body.theme-dark .home-card,
+body.theme-dark .event-top,
+body.theme-dark .vote-panel,
+body.theme-dark .stats,
+body.theme-dark .panel,
+body.theme-dark .finalResults,
+body.theme-dark .announcementsBox {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.035)),
+    rgba(19,13,30,.82);
+  border-color: rgba(255,255,255,.14);
+}
+
+body.theme-dark .btn.primary {
+  background: linear-gradient(135deg, #e45282, #8c5cff);
+  box-shadow: 0 18px 42px rgba(216,75,116,.28);
+}
+
+/* 2. Rojo pasión · intenso */
+body.theme-passion {
+  color-scheme: dark;
+  --bg: #130106;
+  --panel: rgba(42, 4, 15, .84);
+  --panel-strong: rgba(66, 6, 22, .96);
+  --panel-2: rgba(255,255,255,.07);
+  --text: #fff7f7;
+  --muted: #ffd2dc;
+  --soft: #ff9db0;
+  --line: rgba(255, 164, 180, .24);
+  --primary: #ff245d;
+  --primary-2: #ff7a45;
+  --gold: #ffd0a1;
+  --danger: #ff355e;
+  --ok: #7cf2b1;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255,36,93,.46), transparent 31rem),
+    radial-gradient(circle at 84% 70%, rgba(255,122,69,.26), transparent 34rem),
+    radial-gradient(circle at 50% 100%, rgba(255,207,161,.16), transparent 32rem),
+    linear-gradient(145deg, #100105, #390815 58%, #090103);
+}
+
+body.theme-passion .home-card,
+body.theme-passion .event-top,
+body.theme-passion .vote-panel,
+body.theme-passion .stats,
+body.theme-passion .panel,
+body.theme-passion .finalResults,
+body.theme-passion .announcementsBox {
+  background:
+    linear-gradient(145deg, rgba(255,100,130,.15), rgba(255,255,255,.035)),
+    rgba(42,4,15,.84);
+  border-color: rgba(255,164,180,.24);
+}
+
+body.theme-passion .btn.primary {
+  background: linear-gradient(135deg, #ff245d, #ff7a45);
+  box-shadow: 0 18px 42px rgba(255,36,93,.30);
+}
+
+body.theme-passion .eyebrow,
+body.theme-passion .themePill,
+body.theme-passion .privacy-badge {
+  color: #ffd0a1;
+}
+
+/* 3. Minimal blanco · claro */
+body.theme-white {
+  color-scheme: light;
+  --bg: #f7f2ea;
+  --panel: rgba(255,255,255,.88);
+  --panel-strong: rgba(255,255,255,.96);
+  --panel-2: rgba(41, 27, 47, .045);
+  --text: #211825;
+  --muted: #65576c;
+  --soft: #8b7c91;
+  --line: rgba(33,25,37,.14);
+  --primary: #8d2f53;
+  --primary-2: #c79a55;
+  --gold: #9a7138;
+  --danger: #c63e51;
+  --ok: #1f9d69;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(141,47,83,.14), transparent 30rem),
+    radial-gradient(circle at 84% 78%, rgba(199,154,85,.17), transparent 36rem),
+    linear-gradient(145deg, #fffdf8, #f2ece5);
+}
+
+body.theme-white .glass-card,
+body.theme-white .home-card,
+body.theme-white .event-top,
+body.theme-white .vote-panel,
+body.theme-white .stats,
+body.theme-white .panel,
+body.theme-white .finalResults,
+body.theme-white .announcementsBox {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.94), rgba(255,255,255,.72));
+  border-color: rgba(33,25,37,.12);
+  box-shadow: 0 24px 80px rgba(55,38,63,.13);
+}
+
+body.theme-white .trust-strip span,
+body.theme-white .privacy-badge,
+body.theme-white .statusPill,
+body.theme-white .themePill,
+body.theme-white .steps article,
+body.theme-white .row,
+body.theme-white .historyRound,
+body.theme-white .finalCard,
+body.theme-white .savedAccessInfo .savedRow,
+body.theme-white .how-card,
+body.theme-white .matchChat {
+  background: rgba(255,255,255,.66);
+  border-color: rgba(33,25,37,.12);
+}
+
+body.theme-white input,
+body.theme-white select,
+body.theme-white textarea {
+  background: rgba(255,255,255,.78);
+  color: var(--text);
+  border-color: rgba(33,25,37,.15);
+}
+
+body.theme-white .btn.secondary,
+body.theme-white .btn.ghost {
+  color: var(--text);
+  background: rgba(255,255,255,.62);
+}
+
+body.theme-white .btn.primary {
+  color: #fff;
+  background: linear-gradient(135deg, #8d2f53, #c79a55);
+  box-shadow: 0 16px 38px rgba(141,47,83,.16);
+}
+
+body.theme-white .brand-logo,
+body.theme-white .brand-logo-hero,
+body.theme-white .mini-brand-logo,
+body.theme-white .eventBrandLogo {
+  background: rgba(255,255,255,.92);
+  border-color: rgba(33,25,37,.10);
+}
+
+/* 4. Fiesta nocturna · neón */
+body.theme-night {
+  color-scheme: dark;
+  --bg: #03040e;
+  --panel: rgba(7, 12, 34, .84);
+  --panel-strong: rgba(11, 18, 52, .96);
+  --panel-2: rgba(255,255,255,.065);
+  --text: #f7fbff;
+  --muted: #b7c5ef;
+  --soft: #80dfff;
+  --line: rgba(157,243,255,.20);
+  --primary: #00d4ff;
+  --primary-2: #7c3cff;
+  --gold: #9df3ff;
+  --danger: #ff4ca8;
+  --ok: #72ffcf;
+  background:
+    radial-gradient(circle at 20% 12%, rgba(0,212,255,.28), transparent 34rem),
+    radial-gradient(circle at 74% 70%, rgba(124,60,255,.34), transparent 38rem),
+    radial-gradient(circle at 50% 100%, rgba(255,0,166,.18), transparent 32rem),
+    linear-gradient(145deg, #03040e, #0a1031 58%, #03040e);
+}
+
+body.theme-night::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.65) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(157,243,255,.45) 0 1px, transparent 1.4px);
+  background-size: 72px 72px, 114px 114px;
+  background-position: 0 0, 28px 40px;
+  opacity: .10;
+}
+
+body.theme-night .app-shell {
+  position: relative;
+  z-index: 1;
+}
+
+body.theme-night .home-card,
+body.theme-night .event-top,
+body.theme-night .vote-panel,
+body.theme-night .stats,
+body.theme-night .panel,
+body.theme-night .finalResults,
+body.theme-night .announcementsBox {
+  background:
+    linear-gradient(145deg, rgba(0,212,255,.11), rgba(124,60,255,.08)),
+    rgba(7,12,34,.84);
+  border-color: rgba(157,243,255,.20);
+  box-shadow:
+    0 24px 80px rgba(0,0,0,.35),
+    0 0 44px rgba(0,212,255,.08);
+}
+
+body.theme-night .btn.primary {
+  color: #03121c;
+  background: linear-gradient(135deg, #00d4ff, #9df3ff);
+  box-shadow: 0 18px 44px rgba(0,212,255,.24);
+}
+
+body.theme-night .btn.secondary {
+  background: rgba(0,212,255,.08);
+  border-color: rgba(157,243,255,.20);
+}
+
+/* 5. Premium dorado · lujo */
+body.theme-gold {
+  color-scheme: dark;
+  --bg: #100a04;
+  --panel: rgba(38, 27, 12, .84);
+  --panel-strong: rgba(55, 38, 14, .96);
+  --panel-2: rgba(255,255,255,.06);
+  --text: #fff9ef;
+  --muted: #e4cfa9;
+  --soft: #d8b46f;
+  --line: rgba(255,217,120,.24);
+  --primary: #d8a63d;
+  --primary-2: #6d3f16;
+  --gold: #ffd978;
+  --danger: #ff765c;
+  --ok: #9ff0a6;
+  background:
+    radial-gradient(circle at 16% 14%, rgba(255,217,120,.30), transparent 32rem),
+    radial-gradient(circle at 80% 72%, rgba(133,75,22,.38), transparent 38rem),
+    linear-gradient(145deg, #0b0703, #261808 58%, #0b0703);
+}
+
+body.theme-gold .home-card,
+body.theme-gold .event-top,
+body.theme-gold .vote-panel,
+body.theme-gold .stats,
+body.theme-gold .panel,
+body.theme-gold .finalResults,
+body.theme-gold .announcementsBox {
+  background:
+    linear-gradient(145deg, rgba(255,217,120,.13), rgba(255,255,255,.035)),
+    rgba(38,27,12,.84);
+  border-color: rgba(255,217,120,.24);
+  box-shadow:
+    0 24px 80px rgba(0,0,0,.42),
+    0 0 54px rgba(216,166,61,.08);
+}
+
+body.theme-gold .btn.primary {
+  color: #211304;
+  background: linear-gradient(135deg, #ffd978, #d8a63d);
+  box-shadow: 0 18px 44px rgba(216,166,61,.24);
+}
+
+body.theme-gold .btn.secondary {
+  background: rgba(255,217,120,.08);
+  border-color: rgba(255,217,120,.22);
+}
+
+/* Compatibilidad común de estilos */
+body.theme-dark .brand-logo,
+body.theme-passion .brand-logo,
+body.theme-night .brand-logo,
+body.theme-gold .brand-logo,
+body.theme-dark .brand-logo-hero,
+body.theme-passion .brand-logo-hero,
+body.theme-night .brand-logo-hero,
+body.theme-gold .brand-logo-hero {
+  box-shadow:
+    0 28px 76px rgba(0,0,0,.38),
+    0 0 68px color-mix(in srgb, var(--primary) 26%, transparent);
+}
+
+body.theme-white .participant-card,
+body.theme-white .person-card,
+body.theme-white .voteButton {
+  color: var(--text);
+}
+
+/* El modo administrador se mantiene azul/petróleo en todos los estilos */
+body.theme-dark .adminPanel,
+body.theme-passion .adminPanel,
+body.theme-white .adminPanel,
+body.theme-night .adminPanel,
+body.theme-gold .adminPanel {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(0, 195, 255, .16), transparent 34%),
+    radial-gradient(circle at 100% 20%, rgba(74, 144, 226, .14), transparent 38%),
+    linear-gradient(145deg, rgba(10, 34, 52, .94), rgba(18, 26, 45, .92)) !important;
+  border: 1px solid rgba(111, 213, 255, .28) !important;
+  color: #f3fbff;
+}
+
+body.theme-white .adminPanel input,
+body.theme-white .adminPanel select,
+body.theme-white .adminPanel textarea {
+  color: #f3fbff;
+  background: rgba(5, 20, 34, .68);
+  border-color: rgba(111, 213, 255, .22);
+}
