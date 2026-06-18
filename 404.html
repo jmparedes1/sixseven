@@ -155,6 +155,32 @@
             <span id="statusPill" class="pill">Estado</span>
             <span id="participantsPill" class="pill">Participantes</span>
           </div>
+
+          <div id="turnCountdownBox" class="turnCountdownBox">
+            <div>
+              <span id="turnLabel" class="turnLabel">Turno 1 de 6</span>
+              <strong id="turnCountdown" class="turnCountdown">07:00</strong>
+            </div>
+            <div class="turnProgressTrack">
+              <span id="turnProgressBar" class="turnProgressBar"></span>
+            </div>
+            <p id="turnHint" class="muted turnHint">Cada turno dura 7 minutos. Al terminar, se abre automáticamente el siguiente.</p>
+          </div>
+
+          <div class="anonymousCounters" aria-label="Contadores anónimos del evento">
+            <article>
+              <span id="anonymousVoters">0</span>
+              <small>Personas que han votado</small>
+            </article>
+            <article>
+              <span id="anonymousReceivedVotes">0</span>
+              <small>Votos recibidos</small>
+            </article>
+            <article>
+              <span id="anonymousMatches">0</span>
+              <small>Matches realizados</small>
+            </article>
+          </div>
         </header>
 
         <section class="card voteBox">
@@ -205,8 +231,15 @@
             <button id="btnSaveAdmin" class="btn primary full" type="button">Guardar cambios</button>
             <button id="btnToggleStatus" class="btn secondary full" type="button">Cerrar evento</button>
             <button id="btnCopyInvite" class="btn secondary full" type="button">Copiar invitación</button>
+            <button id="btnShowQr" class="btn secondary full" type="button">Ver código QR</button>
             <button id="btnResetVotes" class="btn danger full" type="button">Reiniciar votos</button>
             <button id="btnDeleteEvent" class="btn danger full" type="button">Eliminar evento</button>
+          </div>
+
+          <div id="qrBox" class="qrBox hidden">
+            <img id="qrImage" class="qrImage" alt="Código QR del evento" />
+            <p class="muted">Escanea este QR para entrar directamente al evento.</p>
+            <a id="qrLink" class="btn secondary full" target="_blank" rel="noopener">Abrir QR en nueva pestaña</a>
           </div>
 
           <p id="adminMsg" class="muted"></p>

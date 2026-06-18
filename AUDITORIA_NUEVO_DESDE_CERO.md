@@ -29,3 +29,19 @@ JSON:
 ## Nota
 
 Esta versión reduce complejidad para evitar errores acumulados de parches anteriores.
+
+
+## Mejora añadida
+
+- Generación de código QR del evento al crear la sala.
+- Visualización del código QR en el panel del administrador.
+
+
+## Cuenta atrás por turnos
+
+La app muestra una cuenta atrás visible para cada uno de los 6 turnos de 7 minutos. Incluye tiempo restante, turno actual y barra de progreso.
+
+
+## Contadores anónimos
+
+La pantalla del evento muestra contadores anónimos de personas que han votado en el turno actual, votos recibidos en el turno actual y matches realizados en el evento. No muestra nombres ni quién votó a quién.

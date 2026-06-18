@@ -42,3 +42,21 @@ Abre:
 https://jmparedes1.github.io/sixseven/?v=clean1
 
 y pulsa Ctrl + F5.
+
+
+## Código QR
+
+- Al crear el evento se genera una vista previa del código QR.
+- En el panel del administrador también aparece el QR del evento.
+- El QR abre la URL de entrada con el código ya cargado.
+- El QR se genera usando QuickChart, así que necesita conexión a internet para mostrarse.
+
+
+## Cuenta atrás por turnos
+
+La app muestra una cuenta atrás visible para cada uno de los 6 turnos de 7 minutos. Incluye tiempo restante, turno actual y barra de progreso.
+
+
+## Contadores anónimos
+
+La pantalla del evento muestra contadores anónimos de personas que han votado en el turno actual, votos recibidos en el turno actual y matches realizados en el evento. No muestra nombres ni quién votó a quién.

@@ -21,6 +21,7 @@ let isAdmin = false;
 let eventListener = null;
 let chatListener = null;
 let activeMatchKey = null;
+let countdownTimer = null;
 
 if (firebaseReady) {
   app = initializeApp(firebaseConfig);
@@ -147,6 +148,64 @@ function roundInfo(event) {
   };
 }
 
+function formatCountdown(ms) {
+  const safe = Math.max(0, Number(ms || 0));
+  const totalSeconds = Math.ceil(safe / 1000);
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+function renderTurnCountdown() {
+  const box = $("turnCountdownBox");
+  if (!box || !currentEvent) return;
+
+  const round = roundInfo(currentEvent);
+  const roundDuration = Number(currentEvent.roundDurationMs || ROUND_MS);
+  const elapsedInRound = round.ended ? roundDuration : Math.max(0, roundDuration - round.msRemaining);
+  const percent = round.ended ? 100 : Math.min(100, Math.max(0, (elapsedInRound / roundDuration) * 100));
+
+  const label = $("turnLabel");
+  const countdown = $("turnCountdown");
+  const bar = $("turnProgressBar");
+  const hint = $("turnHint");
+
+  if (label) label.textContent = round.ended ? "Turnos finalizados" : `Turno ${round.currentRound} de ${TOTAL_ROUNDS}`;
+  if (countdown) countdown.textContent = round.ended ? "00:00" : formatCountdown(round.msRemaining);
+  if (bar) bar.style.width = `${percent}%`;
+
+  if (hint) {
+    if (round.ended) {
+      hint.textContent = "Los 6 turnos han finalizado. Puedes revisar los matches y chats privados.";
+    } else if (round.msRemaining <= 30000) {
+      hint.textContent = "Quedan menos de 30 segundos para el siguiente turno.";
+    } else {
+      hint.textContent = "Cada turno dura 7 minutos. Al terminar, se abre automáticamente el siguiente.";
+    }
+  }
+
+  box.classList.toggle("ended", round.ended);
+  box.classList.toggle("urgent", !round.ended && round.msRemaining <= 30000);
+}
+
+function startCountdownTimer() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  renderTurnCountdown();
+  countdownTimer = setInterval(() => {
+    renderTurnCountdown();
+    if (currentEvent) {
+      const round = roundInfo(currentEvent);
+      $("roundPill").textContent = round.ended ? "Turnos finalizados" : `Turno ${round.currentRound}/${TOTAL_ROUNDS}`;
+    }
+  }, 1000);
+}
+
+function stopCountdownTimer() {
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = null;
+}
+
+
 function eventCanJoin(event) {
   return event && event.status !== "closed" && Date.now() < Number(event.expiresAt || 0);
 }
@@ -159,14 +218,71 @@ function pairKey(a, b) {
   return [a, b].sort().join("_");
 }
 
+function countAnonymousMatches(allVotes = {}) {
+  const matches = new Set();
+  Object.entries(allVotes || {}).forEach(([roundKey, votes]) => {
+    Object.entries(votes || {}).forEach(([voterUid, vote]) => {
+      const targetUid = vote?.targetUid;
+      if (!targetUid) return;
+      const reciprocal = votes?.[targetUid];
+      if (reciprocal?.targetUid === voterUid) {
+        matches.add(`${roundKey}_${pairKey(voterUid, targetUid)}`);
+      }
+    });
+  });
+  return matches.size;
+}
+
+function anonymousStats(event = {}, round = roundInfo(event)) {
+  const allVotes = event.votesByRound || {};
+  const currentRoundVotes = allVotes?.[round.roundKey] || {};
+  const peopleWhoVoted = Object.keys(currentRoundVotes).length;
+  const receivedVotes = Object.values(currentRoundVotes).filter(vote => vote?.targetUid).length;
+  const matches = countAnonymousMatches(allVotes);
+
+  return {
+    peopleWhoVoted,
+    receivedVotes,
+    matches
+  };
+}
+
+function renderAnonymousCounters(event = currentEvent) {
+  if (!event) return;
+  const stats = anonymousStats(event, roundInfo(event));
+
+  if ($("anonymousVoters")) $("anonymousVoters").textContent = String(stats.peopleWhoVoted);
+  if ($("anonymousReceivedVotes")) $("anonymousReceivedVotes").textContent = String(stats.receivedVotes);
+  if ($("anonymousMatches")) $("anonymousMatches").textContent = String(stats.matches);
+}
+
+
 function inviteUrl(code) {
   const base = location.origin + location.pathname.replace(/index\.html$/, "");
   return `${base}?code=${encodeURIComponent(code)}`;
 }
 
+function qrUrl(code) {
+  const url = inviteUrl(code);
+  return `https://quickchart.io/qr?size=320&margin=2&text=${encodeURIComponent(url)}`;
+}
+
+function renderQr(code, showToast = false) {
+  const box = $("qrBox");
+  const img = $("qrImage");
+  const link = $("qrLink");
+  if (!box || !img || !link || !code) return;
+  const qr = qrUrl(code);
+  img.src = qr;
+  link.href = qr;
+  box.classList.remove("hidden");
+  if (showToast) toast("Código QR generado.");
+}
+
 function stopListeners() {
   if (eventListener) eventListener();
   if (chatListener) chatListener();
+  stopCountdownTimer();
   eventListener = null;
   chatListener = null;
   activeMatchKey = null;
@@ -231,9 +347,17 @@ async function createEvent() {
       <h3>Evento creado</h3>
       <p>Código: <strong>${code}</strong></p>
       <p>Guarda tu clave de creador.</p>
+      <div class="qrCreateWrap">
+        <img class="qrImage" src="${qrUrl(code)}" alt="Código QR del evento" />
+        <p class="muted">Escanea el QR para abrir directamente la pantalla de entrada con el código cargado.</p>
+      </div>
       <button class="btn secondary full" id="copyNewInvite" type="button">Copiar invitación</button>
+      <a class="btn secondary full" id="openNewQr" href="${qrUrl(code)}" target="_blank" rel="noopener">Abrir código QR</a>
     `;
-    $("copyNewInvite")?.addEventListener("click", () => navigator.clipboard.writeText(inviteUrl(code)));
+    $("copyNewInvite")?.addEventListener("click", async () => {{
+      await navigator.clipboard.writeText(inviteUrl(code));
+      toast("Invitación copiada.");
+    }});
     toast("Evento creado correctamente.");
     openEvent(code);
   } catch (err) {
@@ -338,6 +462,7 @@ function openEvent(code) {
   stopListeners();
   currentCode = cleanCode(code);
   show("eventView");
+  startCountdownTimer();
 
   eventListener = onValue(ref(db, `events/${currentCode}`), snap => {
     if (!snap.exists()) {
@@ -363,9 +488,11 @@ function renderEvent() {
   $("currentCode").textContent = currentCode || "";
   $("currentTitle").textContent = event.name || "Evento";
   $("currentReason").textContent = event.reason || "";
-  $("roundPill").textContent = round.ended ? "Evento finalizado" : `Ronda ${round.currentRound}/${TOTAL_ROUNDS}`;
+  $("roundPill").textContent = round.ended ? "Turnos finalizados" : `Turno ${round.currentRound}/${TOTAL_ROUNDS}`;
   $("statusPill").textContent = event.status === "closed" ? "Cerrado" : "Abierto";
   $("participantsPill").textContent = `${Object.keys(participants).length} participantes`;
+  renderTurnCountdown();
+  renderAnonymousCounters(event);
 
   renderParticipants(participants, votes, round);
   renderAdmin();
@@ -467,13 +594,18 @@ async function sendChat() {
 
 function renderAdmin() {
   const panel = $("adminPanel");
+  const qrBox = $("qrBox");
   panel.classList.toggle("hidden", !isAdmin);
-  if (!isAdmin) return;
+  if (!isAdmin) {
+    qrBox?.classList.add("hidden");
+    return;
+  }
 
   if (document.activeElement !== $("adminName")) $("adminName").value = currentEvent.name || "";
   $("adminTheme").value = currentEvent.theme || "dark";
   $("adminMax").value = String(Number(currentEvent.maxParticipants ?? 67));
   $("btnToggleStatus").textContent = currentEvent.status === "closed" ? "Reabrir evento" : "Cerrar evento";
+  renderQr(currentCode);
 }
 
 async function saveAdmin() {
@@ -541,10 +673,11 @@ function init() {
 
   bind("btnSaveAdmin", "click", saveAdmin);
   bind("btnToggleStatus", "click", toggleStatus);
-  bind("btnCopyInvite", "click", () => {
-    if (currentCode) navigator.clipboard.writeText(inviteUrl(currentCode));
+  bind("btnCopyInvite", "click", async () => {
+    if (currentCode) await navigator.clipboard.writeText(inviteUrl(currentCode));
     toast("Invitación copiada.");
   });
+  bind("btnShowQr", "click", () => renderQr(currentCode, true));
   bind("btnResetVotes", "click", resetVotes);
   bind("btnDeleteEvent", "click", deleteEvent);
 
