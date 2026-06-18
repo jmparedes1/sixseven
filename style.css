@@ -2133,3 +2133,7 @@ body.theme-gold .accessGateBox {
 #adminSettingsMsg[data-state="error"]::before {
   content: "⚠ ";
 }
+
+/* BOTONES_INICIO_CORREGIDOS */
+.main-actions,#showCreate,#showJoin{position:relative;z-index:20;pointer-events:auto;touch-action:manipulation}
+.ambient{pointer-events:none}

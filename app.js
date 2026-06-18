@@ -132,6 +132,53 @@ function applyTheme(theme = "dark") {
   document.documentElement.setAttribute("data-theme", selected);
 }
 
+function goToInitialView(viewId) {
+  if (viewId === "createView") {
+    applyTheme($("eventTheme")?.value || "dark");
+    show("createView");
+    setTimeout(() => $("globalAdminCodeCreate")?.focus(), 80);
+    return;
+  }
+  if (viewId === "joinView") {
+    applyTheme(currentEvent?.theme || $("eventTheme")?.value || "dark");
+    show("joinView");
+    setTimeout(() => $("joinCode")?.focus(), 80);
+    return;
+  }
+  show("home");
+}
+
+function bindInitialNavigation() {
+  const createBtn = $("showCreate");
+  const joinBtn = $("showJoin");
+  if (createBtn && !createBtn.dataset.boundNavigation) {
+    createBtn.dataset.boundNavigation = "1";
+    createBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      goToInitialView("createView");
+    });
+  }
+  if (joinBtn && !joinBtn.dataset.boundNavigation) {
+    joinBtn.dataset.boundNavigation = "1";
+    joinBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      goToInitialView("joinView");
+    });
+  }
+  document.querySelectorAll("[data-target-view]").forEach(button => {
+    if (button.dataset.boundGenericNavigation) return;
+    button.dataset.boundGenericNavigation = "1";
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      goToInitialView(button.dataset.targetView);
+    });
+  });
+}
+
+
 
 function getThemeForRender(event = currentEvent) {
   if (pendingThemeOverride && isAdmin(event)) return normalizeTheme(pendingThemeOverride);
@@ -580,11 +627,6 @@ function setupInviteFromUrl() {
   }
 }
 
-bind("showCreate", "click", () => {
-  applyTheme($("eventTheme")?.value || "dark");
-  show("createView");
-});
-bind("showJoin", "click", () => show("joinView"));
 bind("aliasBtn", "click", () => {
   $("participantName").value = randomAlias();
   $("participantName").focus();
@@ -2178,3 +2220,9 @@ try {
 // MEJORA_ESTILOS_VISUALES_REPASADOS
 // Los estilos visuales disponibles son:
 // dark, passion, white, night y gold.
+
+window.addEventListener("DOMContentLoaded", () => {
+  bindInitialNavigation();
+});
+
+setTimeout(bindInitialNavigation, 0);
