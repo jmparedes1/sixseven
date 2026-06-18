@@ -1,30 +1,35 @@
 {
   "rules": {
+    ".read": false,
+    ".write": false,
     "events": {
       "$code": {
         ".read": "auth != null && $code.matches(/^[A-Z0-9]{10}$/)",
         ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && ((!data.exists() && newData.child('creatorUid').val() == auth.uid) || data.child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-        ".validate": "!newData.exists() || newData.hasChildren(['name', 'reason', 'creatorUid', 'status', 'expiresAt'])",
+        ".validate": "!newData.exists() || newData.hasChildren(['name','reason','creatorUid','status','createdAt','expiresAt'])",
         "name": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
         },
         "reason": {
           ".validate": "newData.isString() && newData.val().length >= 3 && newData.val().length <= 40"
         },
+        "theme": {
+          ".validate": "newData.isString() && newData.val().matches(/^(dark|passion|white|night|gold)$/)"
+        },
         "creatorUid": {
-          ".validate": "newData.isString() && (!data.exists() ? newData.val() == auth.uid : newData.val() == data.child('creatorUid').val())"
+          ".validate": "newData.isString()"
         },
         "status": {
-          ".validate": "newData.val() == 'waiting' || newData.val() == 'open' || newData.val() == 'closed'"
-        },
-        "expiresAt": {
-          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 604800000"
+          ".validate": "newData.val() == 'open' || newData.val() == 'closed'"
         },
         "createdAt": {
           ".validate": "newData.isNumber()"
         },
         "roundStartedAt": {
-          ".validate": "newData.isNumber() && newData.val() > 0"
+          ".validate": "newData.isNumber()"
+        },
+        "expiresAt": {
+          ".validate": "newData.isNumber()"
         },
         "roundDurationMs": {
           ".validate": "newData.val() == 420000"
@@ -35,68 +40,28 @@
         "maxParticipants": {
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
         },
-        "soundEnabled": {
-          ".validate": "newData.isBoolean()"
-        },
         "participants": {
           "$uid": {
-            ".write": "auth != null && ((auth.uid == $uid && !newData.exists()) || ((auth.uid == $uid && !data.exists() && (root.child('events').child($code).child('status').val() == 'waiting' || root.child('events').child($code).child('status').val() == 'open') && root.child('events').child($code).child('expiresAt').val() > now && (!root.child('events').child($code).child('closeEntryRound2').exists() || root.child('events').child($code).child('closeEntryRound2').val() == false || now < root.child('events').child($code).child('roundStartedAt').val() + 420000)) || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true))",
-            ".validate": "!newData.exists() || (newData.hasChildren(['name', 'normalizedName', 'consentAcceptedAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40 && newData.child('normalizedName').isString() && newData.child('normalizedName').val().length >= 2 && newData.child('normalizedName').val().length <= 48 && newData.child('consentAcceptedAt').isNumber() && (!newData.child('joinedAt').exists() || newData.child('joinedAt').isNumber()) && (!newData.child('active').exists() || newData.child('active').isBoolean()))"
+            ".write": "auth != null && auth.uid == $uid && root.child('events').child($code).child('status').val() == 'open' && root.child('events').child($code).child('expiresAt').val() > now",
+            ".validate": "!newData.exists() || (newData.hasChildren(['name','normalizedName','consentAcceptedAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40 && newData.child('normalizedName').isString() && newData.child('consentAcceptedAt').isNumber())"
           }
         },
         "nameIndex": {
-          "$normalizedName": {
-            ".write": "auth != null && ((!data.exists() && newData.val() == auth.uid) || data.val() == auth.uid || !newData.exists() || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
+          "$name": {
+            ".write": "auth != null && ((!data.exists() && newData.val() == auth.uid) || data.val() == auth.uid || !newData.exists())",
             ".validate": "!newData.exists() || (newData.isString() && newData.val() == auth.uid)"
           }
         },
         "votesByRound": {
           "$round": {
             "$uid": {
-              ".read": "auth != null && $code.matches(/^[A-Z0-9]{10}$/)",
-              ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && $round.matches(/^[1-6]$/) && ((auth.uid == $uid && !newData.exists()) || (auth.uid == $uid && !data.exists() && newData.exists() && root.child('events').child($code).child('status').val() == 'open' && root.child('events').child($code).child('expiresAt').val() > now && root.child('events').child($code).child('participants').child($uid).exists() && root.child('events').child($code).child('participants').child(newData.child('targetUid').val()).exists() && newData.child('targetUid').val() != $uid) || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-              ".validate": "!newData.exists() || (newData.hasChildren(['targetUid']) && newData.child('targetUid').isString() && root.child('events').child($code).child('participants').child($uid).exists() && root.child('events').child($code).child('participants').child(newData.child('targetUid').val()).exists() && newData.child('targetUid').val() != $uid && (!newData.child('createdAt').exists() || newData.child('createdAt').isNumber()))"
+              ".write": "auth != null && auth.uid == $uid && root.child('events').child($code).child('status').val() == 'open' && root.child('events').child($code).child('expiresAt').val() > now && !data.exists()",
+              ".validate": "newData.hasChildren(['targetUid','createdAt']) && newData.child('targetUid').isString() && newData.child('targetUid').val() != auth.uid && root.child('events').child($code).child('participants').child(newData.child('targetUid').val()).exists() && newData.child('createdAt').isNumber()"
             }
-          }
-        },
-        "matchPairsByRound": {
-          "$round": {
-            "$pair": {
-              ".read": "auth != null && $code.matches(/^[A-Z0-9]{10}$/)",
-              ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && $round.matches(/^[1-6]$/) && (root.child('events').child($code).child('participants').child(auth.uid).exists() || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-              ".validate": "!newData.exists() || newData.isBoolean()"
-            }
-          }
-        },
-        "votes": {
-          "$uid": {
-            ".write": "auth != null && (root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-            ".validate": "!newData.exists()"
-          }
-        },
-        "matchPairs": {
-          "$pair": {
-            ".write": "auth != null && (root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-            ".validate": "!newData.exists()"
           }
         },
         "$other": {
-          ".validate": false
-        },
-        "recoveryQuestion": {
-          ".validate": "newData.isString() && newData.val().length <= 80"
-        },
-        "theme": {
-          ".validate": "newData.isString() && newData.val().matches(/^(dark|passion|white|night|gold)$/)"
-        },
-        "closeEntryRound2": {
-          ".validate": "newData.isBoolean()"
-        },
-        "announcements": {
-          "$announcementId": {
-            ".write": "auth != null && (root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-            ".validate": "!newData.exists() || (newData.hasChildren(['text','createdAt','creatorUid']) && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 120 && newData.child('createdAt').isNumber() && newData.child('creatorUid').val() == auth.uid)"
-          }
+          ".validate": true
         }
       }
     },
@@ -104,59 +69,27 @@
       "$code": {
         ".read": false,
         ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && ((!data.exists() && root.child('events').child($code).child('creatorUid').val() == auth.uid) || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-        ".validate": "!newData.exists() || (newData.child('creatorKey').isString() && newData.child('creatorKey').val().matches(/^[A-Z0-9-]{6,32}$/) && (!newData.child('createdBy').exists() || newData.child('createdBy').isString()) && (!newData.child('createdAt').exists() || newData.child('createdAt').isNumber()) && (!newData.child('recoveryAnswer').exists() || (newData.child('recoveryAnswer').isString() && newData.child('recoveryAnswer').val().length <= 80)))"
+        ".validate": "!newData.exists() || (newData.child('creatorKey').isString() && newData.child('creatorKey').val().matches(/^[A-Z0-9-]{6,32}$/))"
       }
     },
     "adminSessions": {
       "$code": {
         "$uid": {
           ".read": "auth != null && auth.uid == $uid",
-          ".write": "auth != null && auth.uid == $uid && $code.matches(/^[A-Z0-9]{10}$/) && ((!newData.exists() && (root.child('events').child($code).child('creatorUid').val() == auth.uid || data.child('active').val() == true)) || (newData.child('active').val() == true && ((newData.child('key').exists() && newData.child('key').val() == root.child('eventSecrets').child($code).child('creatorKey').val()) || (newData.child('recoveryAnswer').exists() && newData.child('recoveryAnswer').val() == root.child('eventSecrets').child($code).child('recoveryAnswer').val()))))",
-          ".validate": "!newData.exists() || (newData.hasChildren(['active','claimedAt']) && newData.child('active').isBoolean() && newData.child('claimedAt').isNumber() && ((newData.child('key').exists() && newData.child('key').isString()) || (newData.child('recoveryAnswer').exists() && newData.child('recoveryAnswer').isString())))"
-        }
-      }
-    },
-    "privateMatches": {
-      "$code": {
-        ".write": "auth != null && (root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-        "$uid": {
-          ".read": "auth != null && auth.uid == $uid",
-          "$pair": {
-            ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && ($uid == auth.uid || root.child('events').child($code).child('participants').child(auth.uid).exists() || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-            ".validate": "!newData.exists() || (newData.hasChildren(['withUid','withName','round']) && newData.child('withUid').isString() && newData.child('withName').isString() && newData.child('withName').val().length <= 40 && newData.child('round').isString() && newData.child('round').val().matches(/^[1-6]$/))"
-          }
+          ".write": "auth != null && auth.uid == $uid && $code.matches(/^[A-Z0-9]{10}$/) && (root.child('events').child($code).child('creatorUid').val() == auth.uid || newData.child('key').val() == root.child('eventSecrets').child($code).child('creatorKey').val())",
+          ".validate": "!newData.exists() || (newData.hasChildren(['active','key','claimedAt']) && newData.child('active').isBoolean() && newData.child('key').isString() && newData.child('claimedAt').isNumber())"
         }
       }
     },
     "chats": {
       "$code": {
-        "$chatId": {
-          ".read": "auth != null && root.child('chats').child($code).child($chatId).child('members').child(auth.uid).val() == true",
-          ".write": "auth != null && (root.child('chats').child($code).child($chatId).child('members').child(auth.uid).val() == true || (!data.exists() && newData.child('members').child(auth.uid).val() == true && root.child('events').child($code).child('participants').child(auth.uid).exists()))",
-          "members": {
-            "$uid": {
-              ".validate": "newData.val() == true"
-            }
-          },
-          "memberNames": {
-            "$uid": {
-              ".validate": "newData.isString() && newData.val().length <= 40"
-            }
-          },
-          "round": {
-            ".validate": "newData.isString() && newData.val().matches(/^[1-6]$/)"
-          },
-          "createdAt": {
-            ".validate": "newData.isNumber() || newData.exists()"
-          },
+        "$match": {
+          ".read": "auth != null && root.child('events').child($code).child('participants').child(auth.uid).exists()",
           "messages": {
-            "$messageId": {
-              ".write": "auth != null && root.child('chats').child($code).child($chatId).child('members').child(auth.uid).val() == true",
-              ".validate": "!newData.exists() || (newData.hasChildren(['senderUid','text']) && newData.child('senderUid').val() == auth.uid && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 500 && (!newData.child('createdAt').exists() || newData.child('createdAt').isNumber()))"
+            "$msg": {
+              ".write": "auth != null && root.child('events').child($code).child('participants').child(auth.uid).exists() && newData.child('uid').val() == auth.uid",
+              ".validate": "newData.hasChildren(['uid','name','text','createdAt']) && newData.child('uid').isString() && newData.child('name').isString() && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 240 && newData.child('createdAt').isNumber()"
             }
-          },
-          "$other": {
-            ".validate": false
           }
         }
       }

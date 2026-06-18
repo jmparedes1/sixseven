@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Diagnóstico sixseven</title>
+<style>body{font-family:Arial,sans-serif;background:#090611;color:white;padding:30px}.card{background:#1b1326;border:1px solid #544264;border-radius:14px;padding:12px;margin:10px 0}.ok{color:#8ff0b2}.bad{color:#ff9aa8}</style></head>
+<body><h1>Diagnóstico sixseven</h1><div id="out"></div>
+<script>
+const out=document.getElementById('out');
+function row(f,ok,d){const div=document.createElement('div');div.className='card';div.innerHTML=`<strong>${f}</strong>: <span class="${ok?'ok':'bad'}">${ok?'OK':'ERROR'}</span> ${d||''}`;out.appendChild(div);}
+['index.html','app.js','style.css','firebase-config.js','firebase.rules.json','manifest.webmanifest'].forEach(f=>{
+ fetch(f,{cache:'no-store'}).then(r=>row(f,r.ok,r.status)).catch(e=>row(f,false,e.message));
+});
+</script></body></html>

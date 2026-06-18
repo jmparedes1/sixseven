@@ -3,15 +3,6 @@
   "short_name": "sixseven",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0b0711",
-  "theme_color": "#0b0711",
-  "description": "Eventos privados con voto secreto y match mutuo.",
-  "icons": [
-    {
-      "src": "assets/sixseven-logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
+  "background_color": "#090611",
+  "theme_color": "#d84b74"
 }
