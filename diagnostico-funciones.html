@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Diagnóstico de funciones sixseven</title>
+<style>body{font-family:Arial,sans-serif;background:#100a18;color:white;padding:30px;line-height:1.5}.card{border:1px solid #5b4b67;border-radius:16px;padding:14px;margin:10px 0;background:#1e1428}.ok{color:#91f5ad}.bad{color:#ff9aa8}code{background:#2e2038;padding:2px 5px;border-radius:6px}</style></head>
+<body>
+<h1>Diagnóstico de funciones sixseven</h1>
+<p>Comprueba que GitHub sirve los archivos necesarios. Si app.js está OK pero crear evento falla, revisa Firebase Authentication Anonymous y Rules.</p>
+<div id="out"></div>
+<script>
+const out=document.getElementById('out');
+function row(name, ok, detail=''){const div=document.createElement('div');div.className='card';div.innerHTML=`<strong>${name}</strong>: <span class="${ok?'ok':'bad'}">${ok?'OK':'ERROR'}</span> ${detail}`;out.appendChild(div);}
+['index.html','app.js','style.css','firebase-config.js','firebase.rules.json'].forEach(file=>{
+  fetch(file,{cache:'no-store'}).then(r=>row(file,r.ok,r.status)).catch(e=>row(file,false,e.message));
+});
+setTimeout(()=>row('Nota',true,'Para crear evento: código general, nombre, clave de creador y repetir clave.'),700);
+</script>
+</body></html>

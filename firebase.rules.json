@@ -18,13 +18,13 @@
           ".validate": "newData.val() == 'waiting' || newData.val() == 'open' || newData.val() == 'closed'"
         },
         "expiresAt": {
-          ".validate": "newData.isNumber() && (data.exists() || (newData.val() > now && newData.val() <= now + 604800000))"
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 604800000"
         },
         "createdAt": {
           ".validate": "newData.isNumber()"
         },
         "roundStartedAt": {
-          ".validate": "newData.isNumber() && (data.exists() || (newData.val() <= now + 60000 && newData.val() >= now - 300000))"
+          ".validate": "newData.isNumber() && newData.val() > 0"
         },
         "roundDurationMs": {
           ".validate": "newData.val() == 420000"
@@ -41,7 +41,7 @@
         "participants": {
           "$uid": {
             ".write": "auth != null && ((auth.uid == $uid && !newData.exists()) || ((auth.uid == $uid && !data.exists() && (root.child('events').child($code).child('status').val() == 'waiting' || root.child('events').child($code).child('status').val() == 'open') && root.child('events').child($code).child('expiresAt').val() > now && (!root.child('events').child($code).child('closeEntryRound2').exists() || root.child('events').child($code).child('closeEntryRound2').val() == false || now < root.child('events').child($code).child('roundStartedAt').val() + 420000)) || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true))",
-            ".validate": "!newData.exists() || (newData.hasChildren(['name', 'normalizedName', 'consentAcceptedAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40 && newData.child('normalizedName').isString() && newData.child('normalizedName').val().length >= 2 && newData.child('normalizedName').val().length <= 48 && newData.child('consentAcceptedAt').isNumber())"
+            ".validate": "!newData.exists() || (newData.hasChildren(['name', 'normalizedName', 'consentAcceptedAt']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40 && newData.child('normalizedName').isString() && newData.child('normalizedName').val().length >= 2 && newData.child('normalizedName').val().length <= 48 && newData.child('consentAcceptedAt').isNumber() && (!newData.child('joinedAt').exists() || newData.child('joinedAt').isNumber()) && (!newData.child('active').exists() || newData.child('active').isBoolean()))"
           }
         },
         "nameIndex": {
@@ -104,7 +104,7 @@
       "$code": {
         ".read": false,
         ".write": "auth != null && $code.matches(/^[A-Z0-9]{10}$/) && ((!data.exists() && root.child('events').child($code).child('creatorUid').val() == auth.uid) || root.child('events').child($code).child('creatorUid').val() == auth.uid || root.child('adminSessions').child($code).child(auth.uid).child('active').val() == true)",
-        ".validate": "!newData.exists() || (newData.child('creatorKey').isString() && newData.child('creatorKey').val().matches(/^[A-Z0-9-]{6,32}$/) && (!newData.child('createdBy').exists() || newData.child('createdBy').isString()) && (!newData.child('recoveryAnswer').exists() || (newData.child('recoveryAnswer').isString() && newData.child('recoveryAnswer').val().length <= 80)))"
+        ".validate": "!newData.exists() || (newData.child('creatorKey').isString() && newData.child('creatorKey').val().matches(/^[A-Z0-9-]{6,32}$/) && (!newData.child('createdBy').exists() || newData.child('createdBy').isString()) && (!newData.child('createdAt').exists() || newData.child('createdAt').isNumber()) && (!newData.child('recoveryAnswer').exists() || (newData.child('recoveryAnswer').isString() && newData.child('recoveryAnswer').val().length <= 80)))"
       }
     },
     "adminSessions": {

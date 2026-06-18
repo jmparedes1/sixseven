@@ -12,6 +12,8 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+window.SIXSEVEN_APP_READY = true;
+window.SIXSEVEN_LAST_ERROR = null;
 const firebaseConfig = window.SIXSEVEN_FIREBASE_CONFIG || {};
 const firebaseIsConfigured = Boolean(
   firebaseConfig?.apiKey &&
@@ -84,19 +86,46 @@ async function sha256Hex(value = "") {
   return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
+function showCreateError(message = "") {
+  const error = $("createError");
+  if (error) error.textContent = message;
+  if (message) toast(message);
+}
+
+function showAppStatus(message = "") {
+  const box = $("appStatusBox");
+  if (!box) return;
+  if (!message) {
+    box.classList.add("hidden");
+    box.textContent = "";
+    return;
+  }
+  box.classList.remove("hidden");
+  box.textContent = message;
+}
+
 async function validateGlobalAdminAccess(inputId, errorId) {
   const input = $(inputId);
   const error = $(errorId);
   const value = input?.value || "";
+  const allowedHashes = [GLOBAL_ADMIN_ACCESS_HASH];
+
   if (error) error.textContent = "";
   if (!value) {
     if (error) error.textContent = "Introduce el código de acceso general.";
     input?.focus();
     return false;
   }
+
   try {
+    if (!crypto?.subtle) {
+      if (error) error.textContent = "Este navegador no permite comprobar el código. Usa HTTPS o GitHub Pages.";
+      input?.focus();
+      return false;
+    }
+
     const hash = await sha256Hex(value.trim());
-    if (hash !== GLOBAL_ADMIN_ACCESS_HASH) {
+    if (!allowedHashes.includes(hash)) {
       if (error) error.textContent = "Código de acceso incorrecto.";
       input?.focus();
       input?.select?.();
@@ -110,6 +139,8 @@ async function validateGlobalAdminAccess(inputId, errorId) {
   }
 }
 
+
+function nowMs() { return Date.now(); }
 
 function bind(id, event, handler) {
   const el = $(id);
@@ -140,6 +171,7 @@ function goToInitialView(viewId) {
     return;
   }
   if (viewId === "joinView") {
+    applyTheme(currentEvent?.theme || $("eventTheme")?.value || "dark");
     show("joinView");
     setTimeout(() => $("joinCode")?.focus(), 80);
     return;
@@ -166,6 +198,15 @@ function bindInitialNavigation() {
       goToInitialView("joinView");
     });
   }
+  document.querySelectorAll("[data-target-view]").forEach(button => {
+    if (button.dataset.boundGenericNavigation) return;
+    button.dataset.boundGenericNavigation = "1";
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      goToInitialView(button.dataset.targetView);
+    });
+  });
 }
 
 
@@ -292,6 +333,16 @@ function normalizeCreatorKey(value = "") {
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 32);
+}
+
+function normalizeRecoveryAnswer(value = "") {
+  return cleanName(value).toUpperCase().slice(0, 80);
+}
+
+function validRecovery(question = "", answer = "") {
+  const q = cleanName(question);
+  const a = normalizeRecoveryAnswer(answer);
+  return q.length >= 3 && q.length <= 80 && a.length >= 2 && a.length <= 80;
 }
 
 function validCreatorKey(value = "") {
@@ -552,14 +603,31 @@ async function ensureAuth() {
     uid = auth.currentUser.uid;
     return uid;
   }
-  await signInAnonymously(auth);
-  return new Promise(resolve => {
+
+  try {
+    await signInAnonymously(auth);
+  } catch (error) {
+    console.error("Error en autenticación anónima:", error);
+    toast("No se pudo iniciar sesión anónima. Activa Anonymous en Firebase Authentication.");
+    throw error;
+  }
+
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("Tiempo agotado esperando autenticación anónima"));
+    }, 8000);
+
     const unsubscribe = onAuthStateChanged(auth, user => {
       if (user) {
+        clearTimeout(timer);
         unsubscribe();
         uid = user.uid;
         resolve(user.uid);
       }
+    }, error => {
+      clearTimeout(timer);
+      unsubscribe();
+      reject(error);
     });
   });
 }
@@ -677,41 +745,57 @@ if (!firebaseIsConfigured) {
 
 bind("createEvent", "click", async () => {
   const button = $("createEvent");
+  const createError = $("createError");
+  if (createError) createError.textContent = "";
+  showAppStatus("");
+
   if (!(await validateGlobalAdminAccess("globalAdminCodeCreate", "globalAdminCodeCreateError"))) return;
-  const name = cleanName($("eventName").value);
+
+  const name = cleanName($("eventName")?.value || "");
   const reason = getSelectedReason("eventReason", "eventReasonCustom");
   const theme = normalizeTheme($("eventTheme")?.value || "dark");
+  const durationHours = Number($("eventDuration")?.value || 24);
   const maxParticipants = Number($("maxParticipants")?.value || 67);
   const closeEntryRound2 = $("closeEntryRound2") ? $("closeEntryRound2").checked === true : false;
-  const soundEnabled = Boolean($("soundEnabled")?.checked);
+  const soundEnabled = $("soundEnabled") ? $("soundEnabled").checked === true : false;
   const creatorKey = normalizeCreatorKey($("creatorKeyCreate")?.value || "");
   const creatorKeyRepeat = normalizeCreatorKey($("creatorKeyCreateRepeat")?.value || "");
 
-  if (!rateLimit("create", 10000)) return;
-  if (!name) return toast("Indica el nombre del evento.");
-  if (!validReason(reason)) return toast("Selecciona o escribe un tipo de conexión válido.");
-  if (!validCreatorKey(creatorKey)) return toast("La clave de creador debe tener entre 6 y 32 caracteres: letras, números o guiones.");
-  if (creatorKey !== creatorKeyRepeat) return toast("Las dos claves de creador no coinciden.");
+  if (!rateLimit("create", 3000)) return;
+  if (!name) return showCreateError("Indica el nombre del evento.");
+  if (!validReason(reason)) return showCreateError("Selecciona o escribe un tipo de conexión válido.");
+  if (!Number.isFinite(maxParticipants) || maxParticipants < 0 || maxParticipants > 100) return showCreateError("El número máximo de participantes debe estar entre 0 y 100.");
+  if (!validCreatorKey(creatorKey)) return showCreateError("La clave de creador debe tener entre 6 y 32 caracteres: letras, números o guiones.");
+  if (creatorKey !== creatorKeyRepeat) return showCreateError("Las dos claves de creador no coinciden.");
 
   try {
-    button.disabled = true;
-    button.textContent = "Creando evento...";
-
-    await ensureAuth();
-    let code = generateCode();
-    let exists = await get(ref(db, `events/${code}`));
-    while (exists.exists()) {
-      code = generateCode();
-      exists = await get(ref(db, `events/${code}`));
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Creando evento...";
     }
 
-    const roundStartedAt = Date.now();
-    const expiresAt = roundStartedAt + TOTAL_EVENT_DURATION_MS;
-    await set(ref(db, `events/${code}`), {
+    await ensureAuth();
+
+    let code = generateCode();
+    let exists = await get(ref(db, `events/${code}`));
+    let guard = 0;
+    while (exists.exists() && guard < 12) {
+      code = generateCode();
+      exists = await get(ref(db, `events/${code}`));
+      guard += 1;
+    }
+    if (exists.exists()) throw new Error("No se pudo generar un código único.");
+
+    const createdAt = nowMs();
+    const roundStartedAt = createdAt;
+    const durationMs = Math.min(Math.max(durationHours, 1), 168) * 60 * 60 * 1000;
+    const expiresAt = createdAt + durationMs;
+
+    const eventPayload = {
       name,
       reason,
       creatorUid: uid,
-      createdAt: serverTimestamp(),
+      createdAt,
       expiresAt,
       status: "open",
       maxParticipants,
@@ -719,27 +803,50 @@ bind("createEvent", "click", async () => {
       soundEnabled,
       roundStartedAt,
       roundDurationMs: ROUND_DURATION_MS,
-      totalRounds: TOTAL_ROUNDS
-    });
+      totalRounds: TOTAL_ROUNDS,
+      theme,
+      recoveryQuestion: ""
+    };
+
+    await set(ref(db, `events/${code}`), eventPayload);
+
     await set(ref(db, `eventSecrets/${code}`), {
       creatorKey,
       createdBy: uid,
-      createdAt: serverTimestamp()
+      createdAt
     });
+
+    await set(ref(db, `adminSessions/${code}/${uid}`), {
+      active: true,
+      key: creatorKey,
+      claimedAt: createdAt
+    });
+
     localStorage.setItem(adminStorageKey(code), creatorKey);
     saveLastCreatorAccess(code, creatorKey, name);
 
     currentEventCode = code;
     currentParticipantName = "Creador";
+    currentEvent = eventPayload;
     hasAdminAccess = true;
+
     renderCreatedBox(code, name, reason, expiresAt, creatorKey);
+    toast("Evento creado correctamente.");
     openEvent(code);
   } catch (error) {
     console.error("Error creando evento:", error);
-    toast("No se pudo crear el evento. Revisa Firebase, Anonymous y las reglas.");
+    window.SIXSEVEN_LAST_ERROR = error?.message || String(error);
+    const message = error?.code === "PERMISSION_DENIED"
+      ? "Firebase ha bloqueado la creación. Pega el firebase.rules.json de este ZIP en Realtime Database > Rules."
+      : "No se pudo crear el evento. Revisa Firebase, Anonymous y las reglas.";
+    if (createError) createError.textContent = message;
+    showAppStatus(message);
+    toast(message);
   } finally {
-    button.disabled = false;
-    button.textContent = "Crear evento y generar código";
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Crear evento y generar código";
+    }
   }
 });
 
@@ -818,15 +925,15 @@ bind("joinEvent", "click", async () => {
     await update(ref(db, `events/${code}/participants/${uid}`), {
       name,
       normalizedName,
-      joinedAt: serverTimestamp(),
-      consentAcceptedAt: serverTimestamp(),
+      joinedAt: nowMs(),
+      consentAcceptedAt: nowMs(),
       active: true
     });
 
     openEvent(code);
   } catch (error) {
     console.error("Error entrando al evento:", error);
-    $("joinError").textContent = "No se pudo entrar. Revisa código, Firebase, Anonymous y reglas.";
+    $("joinError").textContent = error?.code === "PERMISSION_DENIED" ? "Firebase ha bloqueado la entrada. Actualiza las reglas con firebase.rules.json." : "No se pudo entrar. Revisa código, Firebase, Anonymous y reglas.";
   } finally {
     button.disabled = false;
     button.textContent = "Entrar al evento";
@@ -1874,7 +1981,7 @@ async function vote(targetUid, targetName, participants) {
   try {
     await set(myVoteRef, {
       targetUid,
-      createdAt: serverTimestamp()
+      createdAt: nowMs()
     });
     toast("Voto registrado. Te avisaremos si hay coincidencia mutua.");
 
@@ -1900,20 +2007,20 @@ async function createPrivateMatchNotice(targetUid, targetName, participants, rou
       withUid: targetUid,
       withName: targetName,
       round: roundKey,
-      createdAt: serverTimestamp()
+      createdAt: nowMs()
     },
     [`privateMatches/${currentEventCode}/${targetUid}/${key}`]: {
       withUid: uid,
       withName: currentParticipantName || participants?.[uid]?.name || "otra persona",
       round: roundKey,
-      createdAt: serverTimestamp()
+      createdAt: nowMs()
     },
     [`chats/${currentEventCode}/${key}/members/${uid}`]: true,
     [`chats/${currentEventCode}/${key}/members/${targetUid}`]: true,
     [`chats/${currentEventCode}/${key}/memberNames/${uid}`]: currentParticipantName || participants?.[uid]?.name || "Yo",
     [`chats/${currentEventCode}/${key}/memberNames/${targetUid}`]: targetName,
     [`chats/${currentEventCode}/${key}/round`]: roundKey,
-    [`chats/${currentEventCode}/${key}/createdAt`]: serverTimestamp()
+    [`chats/${currentEventCode}/${key}/createdAt`]: nowMs()
   });
 }
 
@@ -2211,5 +2318,12 @@ try {
 // Los estilos visuales disponibles son:
 // dark, passion, white, night y gold.
 
-window.addEventListener("DOMContentLoaded", bindInitialNavigation);
+window.addEventListener("DOMContentLoaded", () => {
+  bindInitialNavigation();
+});
+
 setTimeout(bindInitialNavigation, 0);
+
+// SIXSEVEN_APP_READY_CONFIRMED
+window.SIXSEVEN_APP_READY = true;
+window.dispatchEvent(new CustomEvent("sixseven:ready"));
