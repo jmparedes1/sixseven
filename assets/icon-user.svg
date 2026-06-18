@@ -1,23 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
   <defs>
-    <linearGradient id="g" x1="18" y1="16" x2="110" y2="112" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#E7D1B2"/>
-      <stop offset="0.44" stop-color="#C89C6F"/>
-      <stop offset="1" stop-color="#9A6E58"/>
+    <linearGradient id="gold" x1="20" y1="18" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E8D0AE"/>
+      <stop offset="0.5" stop-color="#D3A26E"/>
+      <stop offset="1" stop-color="#B88755"/>
     </linearGradient>
-    <linearGradient id="s" x1="22" y1="20" x2="106" y2="108" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#D2AC7A"/>
-      <stop offset="1" stop-color="#24324B"/>
+    <linearGradient id="navy" x1="14" y1="14" x2="114" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22324A"/>
+      <stop offset="1" stop-color="#0C1424"/>
     </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="2.4" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.95  0 1 0 0 0.52  0 0 1 0 0.38  0 0 0 0.55 0"/>
-      <feBlend in="SourceGraphic"/>
+    <filter id="shadow" x="0" y="0" width="128" height="128" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#9A7A51" flood-opacity="0.24"/>
     </filter>
   </defs>
-  
-  <circle cx="64" cy="46" r="18" stroke="url(#g)" stroke-width="7"/>
-  <path d="M29 105c6-25 22-37 35-37s29 12 35 37" stroke="url(#g)" stroke-width="7" stroke-linecap="round"/>
-  <circle cx="64" cy="64" r="50" stroke="url(#s)" stroke-width="4" opacity=".75"/>
-
+  <g filter="url(#shadow)">
+    <rect x="12" y="12" width="104" height="104" rx="22" fill="url(#navy)" stroke="#D8B485" stroke-width="2.2"/>
+  </g>
+  <circle cx="64" cy="51" r="14" stroke="url(#gold)" stroke-width="4"/>
+<path d="M38 90c5-12 16-18 26-18s21 6 26 18" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
 </svg>

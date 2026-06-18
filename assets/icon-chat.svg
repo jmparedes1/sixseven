@@ -1,22 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
   <defs>
-    <linearGradient id="g" x1="18" y1="16" x2="110" y2="112" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#E7D1B2"/>
-      <stop offset="0.44" stop-color="#C89C6F"/>
-      <stop offset="1" stop-color="#9A6E58"/>
+    <linearGradient id="gold" x1="20" y1="18" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E8D0AE"/>
+      <stop offset="0.5" stop-color="#D3A26E"/>
+      <stop offset="1" stop-color="#B88755"/>
     </linearGradient>
-    <linearGradient id="s" x1="22" y1="20" x2="106" y2="108" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#D2AC7A"/>
-      <stop offset="1" stop-color="#24324B"/>
+    <linearGradient id="navy" x1="14" y1="14" x2="114" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22324A"/>
+      <stop offset="1" stop-color="#0C1424"/>
     </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="2.4" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.95  0 1 0 0 0.52  0 0 1 0 0.38  0 0 0 0.55 0"/>
-      <feBlend in="SourceGraphic"/>
+    <filter id="shadow" x="0" y="0" width="128" height="128" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#9A7A51" flood-opacity="0.24"/>
     </filter>
   </defs>
-  
-  <path d="M23 35c0-9 7-16 16-16h44c13 0 23 10 23 23v15c0 13-10 23-23 23H55L30 100l5-22c-7-4-12-12-12-21V35Z" stroke="url(#g)" stroke-width="7" stroke-linejoin="round"/>
-  <path d="M47 51h.1M64 51h.1M81 51h.1" stroke="url(#s)" stroke-width="9" stroke-linecap="round"/>
-
+  <g filter="url(#shadow)">
+    <rect x="12" y="12" width="104" height="104" rx="22" fill="url(#navy)" stroke="#D8B485" stroke-width="2.2"/>
+  </g>
+  <path d="M36 42h56c6 0 10 4 10 10v24c0 6-4 10-10 10H64l-14 11v-11H36c-6 0-10-4-10-10V52c0-6 4-10 10-10Z" stroke="url(#gold)" stroke-width="4" stroke-linejoin="round"/>
+<circle cx="49" cy="64" r="3" fill="url(#gold)"/><circle cx="64" cy="64" r="3" fill="url(#gold)"/><circle cx="79" cy="64" r="3" fill="url(#gold)"/>
 </svg>

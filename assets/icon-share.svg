@@ -16,6 +16,8 @@
   <g filter="url(#shadow)">
     <rect x="12" y="12" width="104" height="104" rx="22" fill="url(#navy)" stroke="#D8B485" stroke-width="2.2"/>
   </g>
-  <path d="M48 46c-6-8-20-7-25 3-5 9 0 20 9 26l16 11 16-11c9-6 14-17 9-26-5-10-19-11-25-3Z" stroke="url(#gold)" stroke-width="4" stroke-linejoin="round"/>
-<path d="M74 54c4-5 13-5 18 1 5 6 3 14-4 19l-9 6" stroke="url(#gold)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M64 82V42" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+<path d="m52 54 12-12 12 12" stroke="url(#gold)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40 70v16c0 4 2 6 6 6h36c4 0 6-2 6-6V70" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+
 </svg>

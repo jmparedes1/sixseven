@@ -1,16 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" fill="none">
   <defs>
-    <linearGradient id="navyMark" x1="44" y1="20" x2="112" y2="148" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#24324B"/>
-      <stop offset="1" stop-color="#0F1726"/>
+    <linearGradient id="goldGrad" x1="30" y1="18" x2="186" y2="126" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EBD2AE"/>
+      <stop offset="0.45" stop-color="#DAB07C"/>
+      <stop offset="1" stop-color="#B6834C"/>
     </linearGradient>
-    <linearGradient id="goldMark" x1="94" y1="62" x2="182" y2="158" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#E6CCAA"/>
-      <stop offset="0.52" stop-color="#D7B07E"/>
-      <stop offset="1" stop-color="#B98959"/>
+    <linearGradient id="navyGrad" x1="30" y1="15" x2="90" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#34415A"/>
+      <stop offset="1" stop-color="#101A2B"/>
     </linearGradient>
   </defs>
-  <path d="M104 28C79 33 52 60 52 96c0 24 15 43 36 43 18 0 33-13 33-31 0-16-13-28-29-28-11 0-20 5-27 12 6-19 21-37 41-49l-2-15Z" stroke="url(#navyMark)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M98 83c8-11 20-18 36-18h56l-69 83" stroke="url(#goldMark)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M87 90c13-22 45-28 66-9" stroke="url(#goldMark)" stroke-width="11" stroke-linecap="round" opacity=".62"/>
+  <path d="M64 16c-20 11-34 32-34 56 0 33 24 57 56 57 15 0 28-6 38-16" stroke="url(#navyGrad)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M79 71c11-11 28-16 44-13 12 2 23 8 33 18" stroke="url(#goldGrad)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M111 80 172 80 132 119" stroke="url(#goldGrad)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M109 80c19 2 34 20 45 39" stroke="url(#goldGrad)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

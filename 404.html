@@ -3,20 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>sixseven · página no encontrada</title>
-  <style>
-    :root{--bg:#0b1220;--bg2:#111a2b;--text:#f7f4ee;--muted:#b4bccb;--line:rgba(231,222,210,.12);--gold:#d7b07e;}
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font-family:Inter,system-ui,sans-serif;color:var(--text);background:radial-gradient(circle at top left, rgba(215,176,126,.12), transparent 28rem),linear-gradient(180deg,var(--bg2),var(--bg));}
-    .card{width:min(720px,100%);padding:40px;border:1px solid var(--line);border-radius:28px;background:rgba(17,24,36,.82);backdrop-filter:blur(14px);box-shadow:0 24px 80px rgba(2,6,12,.42)}
-    img{display:block;width:min(100%,520px);height:auto;margin-bottom:18px}h1{margin:0 0 10px;font-size:clamp(2rem,5vw,3rem)}p{color:var(--muted);line-height:1.6}a{display:inline-block;margin-top:14px;color:#10192a;background:linear-gradient(135deg,#e6cfaf,#b98959);text-decoration:none;padding:14px 22px;border-radius:999px;font-weight:800}
-  </style>
+  <title>sixseven · no encontrado</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <main class="card">
-    <img src="./assets/sixseven-wordmark-dark.svg" alt="sixseven" />
-    <h1>Esta página no existe</h1>
-    <p>La dirección que intentas abrir no está disponible. Puedes volver a la aplicación principal y entrar con tu código de evento.</p>
-    <a href="./index.html">Volver a sixseven</a>
+  <main class="shell">
+    <section class="view active">
+      <div class="card panel" style="max-width:720px;margin:10vh auto;text-align:center;">
+        <img class="logoFull" src="./assets/sixseven-logo.svg" alt="sixseven" style="max-width:420px;margin:0 auto 20px;"/>
+        <h1>Página no encontrada</h1>
+        <p class="muted">La ruta solicitada no existe o el evento ya no está disponible.</p>
+        <p><a class="btn primary" href="./index.html">Volver a la app</a></p>
+      </div>
+    </section>
   </main>
 </body>
 </html>

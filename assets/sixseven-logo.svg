@@ -1,16 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 240" fill="none">
   <defs>
-    <linearGradient id="navyMark" x1="44" y1="20" x2="112" y2="148" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#24324B"/>
-      <stop offset="1" stop-color="#0F1726"/>
+    <linearGradient id="goldGrad" x1="40" y1="30" x2="220" y2="145" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EBD2AE"/>
+      <stop offset="0.45" stop-color="#DAB07C"/>
+      <stop offset="1" stop-color="#B6834C"/>
     </linearGradient>
-    <linearGradient id="goldMark" x1="94" y1="62" x2="182" y2="158" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#E6CCAA"/>
-      <stop offset="0.52" stop-color="#D7B07E"/>
-      <stop offset="1" stop-color="#B98959"/>
+    <linearGradient id="navyGrad" x1="36" y1="22" x2="98" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#34415A"/>
+      <stop offset="1" stop-color="#101A2B"/>
     </linearGradient>
   </defs>
-  <path d="M104 28C79 33 52 60 52 96c0 24 15 43 36 43 18 0 33-13 33-31 0-16-13-28-29-28-11 0-20 5-27 12 6-19 21-37 41-49l-2-15Z" stroke="url(#navyMark)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M98 83c8-11 20-18 36-18h56l-69 83" stroke="url(#goldMark)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M87 90c13-22 45-28 66-9" stroke="url(#goldMark)" stroke-width="11" stroke-linecap="round" opacity=".62"/>
+  <path d="M86 26c-26 15-44 42-44 74 0 43 31 75 74 75 19 0 37-8 51-21" stroke="url(#navyGrad)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M107 97c14-14 36-20 57-16 15 3 30 10 43 24" stroke="url(#goldGrad)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M148 109h78l-50 50" stroke="url(#goldGrad)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M144 109c24 3 42 25 56 50" stroke="url(#goldGrad)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="270" y="145" font-family="Satoshi, Inter, Arial, sans-serif" font-size="106" font-weight="300" letter-spacing="18" fill="#192133">sixseven</text>
+  <text x="274" y="184" font-family="Satoshi, Inter, Arial, sans-serif" font-size="24" font-weight="500" letter-spacing="8" fill="#B88A57">PRIVATE EVENTS. REAL CONNECTIONS.</text>
 </svg>

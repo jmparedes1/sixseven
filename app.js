@@ -86,14 +86,14 @@ function randomCode() {
   return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
-function getWordmarkSrc(theme = "dark") {
-  return theme === "white"
+function getWordmarkSrc(theme = "gold") {
+  return ["dark", "night", "passion"].includes(theme)
     ? "./assets/sixseven-wordmark-light.svg"
     : "./assets/sixseven-wordmark-dark.svg";
 }
 
-function applyTheme(theme = "dark", persist = false) {
-  const t = VALID_THEMES.includes(theme) ? theme : "dark";
+function applyTheme(theme = "gold", persist = false) {
+  const t = VALID_THEMES.includes(theme) ? theme : "gold";
   document.body.classList.remove(...VALID_THEMES.map(x => `theme-${x}`));
   document.body.classList.add(`theme-${t}`);
   document.documentElement.setAttribute("data-theme", t);
@@ -799,13 +799,13 @@ function escapeHtml(text = "") {
 
 function init() {
   const savedTheme = localStorage.getItem(APP_THEME_KEY);
-  applyTheme(savedTheme || "dark");
+  applyTheme(savedTheme || "gold");
 
   bind("btnGoCreate", "click", () => show("createView"));
   bind("btnGoJoin", "click", () => show("joinView"));
   document.querySelectorAll("[data-go]").forEach(btn => btn.addEventListener("click", () => {
     stopListeners();
-    if (btn.dataset.go === "homeView") applyTheme(localStorage.getItem(APP_THEME_KEY) || "dark");
+    if (btn.dataset.go === "homeView") applyTheme(localStorage.getItem(APP_THEME_KEY) || "gold");
     show(btn.dataset.go);
   }));
 
