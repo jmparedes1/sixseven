@@ -6,6 +6,7 @@ const ACCESS_HASH = "8e76c0308d7336c906bd5d6c460afca6e90e3e0cdbf7445c86e4c905405
 const VALID_THEMES = ["dark", "passion", "white", "night", "gold"];
 const ROUND_MS = 7 * 60 * 1000;
 const TOTAL_ROUNDS = 6;
+const APP_THEME_KEY = "sixseven_preview_theme";
 
 const firebaseConfig = window.SIXSEVEN_FIREBASE_CONFIG || {};
 const firebaseReady = Boolean(firebaseConfig.apiKey && firebaseConfig.databaseURL);
@@ -57,11 +58,13 @@ function cleanCode(value = "") {
 }
 
 function cleanName(value = "") {
-  return String(value).trim().replace(/\s+/g, " ").slice(0, 40);
+  return String(value).trim().replace(/\s+/g, " ").slice(0, 80);
 }
 
 function normalizeName(value = "") {
-  return cleanName(value)
+  return String(value)
+    .trim()
+    .replace(/\s+/g, " ")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
@@ -83,11 +86,20 @@ function randomCode() {
   return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
-function applyTheme(theme = "dark") {
+function getWordmarkSrc(theme = "dark") {
+  return theme === "white"
+    ? "./assets/sixseven-wordmark-light.svg"
+    : "./assets/sixseven-wordmark-dark.svg";
+}
+
+function applyTheme(theme = "dark", persist = false) {
   const t = VALID_THEMES.includes(theme) ? theme : "dark";
   document.body.classList.remove(...VALID_THEMES.map(x => `theme-${x}`));
   document.body.classList.add(`theme-${t}`);
   document.documentElement.setAttribute("data-theme", t);
+  const wordmark = $("heroWordmark");
+  if (wordmark) wordmark.src = getWordmarkSrc(t);
+  if (persist) localStorage.setItem(APP_THEME_KEY, t);
 }
 
 async function sha256Hex(value = "") {
@@ -137,14 +149,16 @@ async function ensureAuth() {
 
 function roundInfo(event) {
   const started = Number(event?.roundStartedAt || event?.createdAt || Date.now());
+  const roundDuration = Number(event?.roundDurationMs || ROUND_MS);
+  const totalRounds = Number(event?.totalRounds || TOTAL_ROUNDS);
   const elapsed = Math.max(0, Date.now() - started);
-  const currentRound = Math.min(TOTAL_ROUNDS, Math.floor(elapsed / ROUND_MS) + 1);
-  const ended = elapsed >= ROUND_MS * TOTAL_ROUNDS || Date.now() > Number(event?.expiresAt || 0);
+  const currentRound = Math.min(totalRounds, Math.floor(elapsed / roundDuration) + 1);
+  const ended = elapsed >= roundDuration * totalRounds || Date.now() > Number(event?.expiresAt || 0);
   return {
     currentRound,
     roundKey: String(currentRound),
     ended,
-    msRemaining: ended ? 0 : Math.max(0, started + currentRound * ROUND_MS - Date.now())
+    msRemaining: ended ? 0 : Math.max(0, started + currentRound * roundDuration - Date.now())
   };
 }
 
@@ -176,9 +190,9 @@ function renderTurnCountdown() {
 
   if (hint) {
     if (round.ended) {
-      hint.textContent = "Los 6 turnos han finalizado. Puedes revisar los matches y chats privados.";
+      hint.textContent = "Los 6 turnos han finalizado. Puedes revisar los matches y los chats privados ya creados.";
     } else if (round.msRemaining <= 30000) {
-      hint.textContent = "Quedan menos de 30 segundos para el siguiente turno.";
+      hint.textContent = "Quedan menos de 30 segundos para que comience el siguiente turno.";
     } else {
       hint.textContent = "Cada turno dura 7 minutos. Al terminar, se abre automáticamente el siguiente.";
     }
@@ -193,7 +207,7 @@ function startCountdownTimer() {
   renderTurnCountdown();
   countdownTimer = setInterval(() => {
     renderTurnCountdown();
-    if (currentEvent) {
+    if (currentEvent && $("roundPill")) {
       const round = roundInfo(currentEvent);
       $("roundPill").textContent = round.ended ? "Turnos finalizados" : `Turno ${round.currentRound}/${TOTAL_ROUNDS}`;
     }
@@ -204,7 +218,6 @@ function stopCountdownTimer() {
   if (countdownTimer) clearInterval(countdownTimer);
   countdownTimer = null;
 }
-
 
 function eventCanJoin(event) {
   return event && event.status !== "closed" && Date.now() < Number(event.expiresAt || 0);
@@ -236,26 +249,20 @@ function countAnonymousMatches(allVotes = {}) {
 function anonymousStats(event = {}, round = roundInfo(event)) {
   const allVotes = event.votesByRound || {};
   const currentRoundVotes = allVotes?.[round.roundKey] || {};
-  const peopleWhoVoted = Object.keys(currentRoundVotes).length;
-  const receivedVotes = Object.values(currentRoundVotes).filter(vote => vote?.targetUid).length;
-  const matches = countAnonymousMatches(allVotes);
-
   return {
-    peopleWhoVoted,
-    receivedVotes,
-    matches
+    peopleWhoVoted: Object.keys(currentRoundVotes).length,
+    receivedVotes: Object.values(currentRoundVotes).filter(vote => vote?.targetUid).length,
+    matches: countAnonymousMatches(allVotes)
   };
 }
 
 function renderAnonymousCounters(event = currentEvent) {
   if (!event) return;
   const stats = anonymousStats(event, roundInfo(event));
-
   if ($("anonymousVoters")) $("anonymousVoters").textContent = String(stats.peopleWhoVoted);
   if ($("anonymousReceivedVotes")) $("anonymousReceivedVotes").textContent = String(stats.receivedVotes);
   if ($("anonymousMatches")) $("anonymousMatches").textContent = String(stats.matches);
 }
-
 
 function inviteUrl(code) {
   const base = location.origin + location.pathname.replace(/index\.html$/, "");
@@ -263,8 +270,7 @@ function inviteUrl(code) {
 }
 
 function qrUrl(code) {
-  const url = inviteUrl(code);
-  return `https://quickchart.io/qr?size=320&margin=2&text=${encodeURIComponent(url)}`;
+  return `https://quickchart.io/qr?size=320&margin=2&text=${encodeURIComponent(inviteUrl(code))}`;
 }
 
 function renderQr(code, showToast = false) {
@@ -286,6 +292,8 @@ function stopListeners() {
   eventListener = null;
   chatListener = null;
   activeMatchKey = null;
+  if ($("matchBox")) $("matchBox").classList.add("hidden");
+  if ($("chatMessages")) $("chatMessages").innerHTML = "";
 }
 
 async function createEvent() {
@@ -293,7 +301,7 @@ async function createEvent() {
   if (error) error.textContent = "";
   if (!(await checkAccess("createAccessCode", "createError"))) return;
 
-  const name = cleanName($("eventName").value);
+  const name = cleanName($("eventName").value).slice(0, 80);
   const reason = $("eventReason").value;
   const theme = $("eventTheme").value;
   const maxParticipants = Number($("maxParticipants").value || 67);
@@ -329,7 +337,8 @@ async function createEvent() {
       expiresAt: now + 24 * 60 * 60 * 1000,
       maxParticipants,
       roundDurationMs: ROUND_MS,
-      totalRounds: TOTAL_ROUNDS
+      totalRounds: TOTAL_ROUNDS,
+      updatedAt: now
     };
 
     await set(ref(db, `events/${code}`), event);
@@ -342,11 +351,12 @@ async function createEvent() {
     currentCode = code;
     currentEvent = event;
 
-    $("createdBox").classList.remove("hidden");
-    $("createdBox").innerHTML = `
+    const createdBox = $("createdBox");
+    createdBox.classList.remove("hidden");
+    createdBox.innerHTML = `
       <h3><img class="smallIcon" src="./assets/icon-qr.svg" alt="" />Evento creado</h3>
       <p>Código: <strong>${code}</strong></p>
-      <p>Guarda tu clave de creador.</p>
+      <p>Guarda tu clave de creador y comparte la invitación o el QR.</p>
       <div class="qrCreateWrap">
         <img class="qrImage" src="${qrUrl(code)}" alt="Código QR del evento" />
         <p class="muted">Escanea el QR para abrir directamente la pantalla de entrada con el código cargado.</p>
@@ -354,10 +364,11 @@ async function createEvent() {
       <button class="btn secondary full" id="copyNewInvite" type="button"><img class="btnIcon" src="./assets/icon-qr.svg" alt="" />Copiar invitación</button>
       <a class="btn secondary full" id="openNewQr" href="${qrUrl(code)}" target="_blank" rel="noopener"><img class="btnIcon" src="./assets/icon-qr.svg" alt="" />Abrir código QR</a>
     `;
-    $("copyNewInvite")?.addEventListener("click", async () => {{
+    $("copyNewInvite")?.addEventListener("click", async () => {
       await navigator.clipboard.writeText(inviteUrl(code));
       toast("Invitación copiada.");
-    }});
+    });
+
     toast("Evento creado correctamente.");
     openEvent(code);
   } catch (err) {
@@ -376,7 +387,7 @@ async function joinEvent() {
   if (error) error.textContent = "";
 
   const code = cleanCode($("joinCode").value);
-  const name = cleanName($("participantName").value);
+  const name = cleanName($("participantName").value).slice(0, 40);
   const norm = normalizeName(name);
   if (!code || !name || norm.length < 2) return error.textContent = "Introduce código y alias válido.";
   if (!$("consentCheck").checked) return error.textContent = "Debes aceptar la participación voluntaria.";
@@ -444,6 +455,10 @@ async function adminAccess() {
     btn.disabled = true;
     btn.textContent = "Comprobando...";
     await ensureAuth();
+
+    const eventSnap = await get(ref(db, `events/${code}`));
+    if (!eventSnap.exists()) return error.textContent = "No existe ningún evento con ese código.";
+
     await set(ref(db, `adminSessions/${code}/${uid}`), { active: true, key, claimedAt: Date.now() });
     localStorage.setItem(`sixseven_admin_${code}`, key);
     isAdmin = true;
@@ -451,7 +466,9 @@ async function adminAccess() {
     openEvent(code);
   } catch (err) {
     console.error(err);
-    error.textContent = "No se pudo acceder como administrador. Revisa clave y reglas.";
+    error.textContent = err?.code === "PERMISSION_DENIED"
+      ? "Clave de creador incorrecta o reglas de Firebase insuficientes."
+      : "No se pudo acceder como administrador. Revisa clave y configuración.";
   } finally {
     btn.disabled = false;
     btn.textContent = "Entrar como administrador";
@@ -467,11 +484,13 @@ function openEvent(code) {
   eventListener = onValue(ref(db, `events/${currentCode}`), snap => {
     if (!snap.exists()) {
       toast("El evento ya no existe.");
+      currentEvent = null;
+      stopListeners();
       show("homeView");
       return;
     }
     currentEvent = snap.val();
-    applyTheme(currentEvent.theme || "dark");
+    applyTheme(currentEvent.theme || "dark", true);
     renderEvent();
   }, err => {
     console.error(err);
@@ -491,18 +510,19 @@ function renderEvent() {
   $("roundPill").textContent = round.ended ? "Turnos finalizados" : `Turno ${round.currentRound}/${TOTAL_ROUNDS}`;
   $("statusPill").textContent = event.status === "closed" ? "Cerrado" : "Abierto";
   $("participantsPill").textContent = `${Object.keys(participants).length} participantes`;
+
   renderTurnCountdown();
   renderAnonymousCounters(event);
-
-  renderParticipants(participants, votes, round);
+  renderParticipants(participants, votes);
   renderAdmin();
   detectMatches(participants, event.votesByRound || {});
 }
 
-function renderParticipants(participants, votes, round) {
+function renderParticipants(participants, votes) {
   const list = $("participantsList");
   list.innerHTML = "";
-  const canVote = eventCanVote(currentEvent);
+  const iAmParticipant = Boolean(uid && participants[uid]);
+  const canVote = eventCanVote(currentEvent) && iAmParticipant && !isAdmin;
   const myVote = votes[uid];
 
   if (!Object.keys(participants).length) {
@@ -510,26 +530,37 @@ function renderParticipants(participants, votes, round) {
     return;
   }
 
-  $("voteHelp").textContent = !canVote
-    ? "La votación no está disponible."
-    : myVote
-      ? "Tu voto está registrado en esta ronda."
-      : "Elige una persona. Tu voto será secreto.";
+  if (!iAmParticipant && !isAdmin) {
+    $("voteHelp").textContent = "No apareces como participante de este evento.";
+  } else if (isAdmin) {
+    $("voteHelp").textContent = "Vista de administrador. El creador no participa en la votación.";
+  } else if (!canVote) {
+    $("voteHelp").textContent = "La votación no está disponible en este momento.";
+  } else if (myVote) {
+    $("voteHelp").textContent = "Tu voto ya está registrado en esta ronda.";
+  } else {
+    $("voteHelp").textContent = "Elige una persona. Tu voto será secreto.";
+  }
 
-  Object.entries(participants).sort((a,b) => (a[1].name || "").localeCompare(b[1].name || "")).forEach(([pid, p]) => {
-    const card = document.createElement("div");
-    card.className = "person" + (pid === uid ? " me" : "");
-    card.innerHTML = `
-      <strong><img class="personIcon" src="./assets/icon-user.svg" alt="" />${escapeHtml(p.name || "Participante")}</strong>
-      <button class="btn small" type="button" ${pid === uid || !canVote || myVote ? "disabled" : ""}><img class="btnIcon" src="./assets/icon-vote.svg" alt="" />Votar</button>
-    `;
-    card.querySelector("button")?.addEventListener("click", () => castVote(pid, p.name || "Participante"));
-    list.appendChild(card);
-  });
+  Object.entries(participants)
+    .sort((a, b) => (a[1].name || "").localeCompare(b[1].name || ""))
+    .forEach(([pid, p]) => {
+      const card = document.createElement("div");
+      card.className = "person" + (pid === uid ? " me" : "");
+      const disabled = pid === uid || !canVote || Boolean(myVote);
+      card.innerHTML = `
+        <strong><img class="personIcon" src="./assets/icon-user.svg" alt="" />${escapeHtml(p.name || "Participante")}</strong>
+        <button class="btn small" type="button" ${disabled ? "disabled" : ""}><img class="btnIcon" src="./assets/icon-vote.svg" alt="" />Votar</button>
+      `;
+      card.querySelector("button")?.addEventListener("click", () => castVote(pid, p.name || "Participante"));
+      list.appendChild(card);
+    });
 }
 
 async function castVote(targetUid, targetName) {
-  if (!currentCode || !eventCanVote(currentEvent)) return;
+  if (!currentCode || !currentEvent || !uid || isAdmin) return;
+  if (!currentEvent?.participants?.[uid]) return toast("No puedes votar si no eres participante del evento.");
+  if (!eventCanVote(currentEvent)) return;
   if (targetUid === uid) return;
   const round = roundInfo(currentEvent);
   try {
@@ -546,6 +577,21 @@ async function castVote(targetUid, targetName) {
   }
 }
 
+async function ensureMatchRecord(matchKey, uidA, uidB, roundKey) {
+  if (!currentCode || !uidA || !uidB) return;
+  const [a, b] = [uidA, uidB].sort();
+  try {
+    await set(ref(db, `matches/${currentCode}/${matchKey}`), {
+      uidA: a,
+      uidB: b,
+      round: String(roundKey),
+      createdAt: Date.now()
+    });
+  } catch (err) {
+    console.warn("No se pudo asegurar el match en la base de datos", err);
+  }
+}
+
 async function detectMatches(participants, allVotes) {
   if (!uid || !currentCode) return;
   for (const [roundKey, votes] of Object.entries(allVotes || {})) {
@@ -557,10 +603,14 @@ async function detectMatches(participants, allVotes) {
       activeMatchKey = key;
       $("matchBox").classList.remove("hidden");
       $("matchText").textContent = `Match con ${participants[myVote.targetUid]?.name || myVote.targetName || "otra persona"} en la ronda ${roundKey}.`;
+      await ensureMatchRecord(key, uid, myVote.targetUid, roundKey);
       subscribeChat(key);
       return;
     }
   }
+  activeMatchKey = null;
+  $("matchBox").classList.add("hidden");
+  $("chatMessages").innerHTML = "";
 }
 
 function subscribeChat(matchKey) {
@@ -569,26 +619,62 @@ function subscribeChat(matchKey) {
     const data = snap.val() || {};
     const box = $("chatMessages");
     box.innerHTML = "";
-    Object.values(data).sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(msg => {
+    Object.values(data).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(msg => {
       const div = document.createElement("div");
       div.className = "msg" + (msg.uid === uid ? " mine" : "");
       div.innerHTML = `<small>${escapeHtml(msg.name || "")}</small>${escapeHtml(msg.text || "")}`;
       box.appendChild(div);
     });
     box.scrollTop = box.scrollHeight;
+  }, err => {
+    console.error(err);
+    toast("No se pudo abrir el chat privado.");
   });
 }
 
 async function sendChat() {
-  const text = cleanName($("chatInput").value).slice(0, 240);
+  const raw = $("chatInput").value;
+  const text = String(raw).trim().slice(0, 240);
   if (!text || !activeMatchKey) return;
   $("chatInput").value = "";
   const id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-  await set(ref(db, `chats/${currentCode}/${activeMatchKey}/messages/${id}`), {
-    uid,
-    name: currentParticipantName || currentEvent?.participants?.[uid]?.name || "Participante",
-    text,
-    createdAt: Date.now()
+  try {
+    await set(ref(db, `chats/${currentCode}/${activeMatchKey}/messages/${id}`), {
+      uid,
+      name: currentParticipantName || currentEvent?.participants?.[uid]?.name || "Participante",
+      text,
+      createdAt: Date.now()
+    });
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo enviar el mensaje.");
+  }
+}
+
+function renderAdminParticipants() {
+  const box = $("adminParticipantsList");
+  if (!box) return;
+  box.innerHTML = "";
+  const participants = currentEvent?.participants || {};
+  const entries = Object.entries(participants).sort((a, b) => (a[1].name || "").localeCompare(b[1].name || ""));
+
+  if (!entries.length) {
+    box.innerHTML = `<p class="muted">Aún no hay participantes inscritos.</p>`;
+    return;
+  }
+
+  entries.forEach(([pid, participant]) => {
+    const item = document.createElement("div");
+    item.className = "adminParticipantItem";
+    item.innerHTML = `
+      <div>
+        <strong>${escapeHtml(participant.name || "Participante")}</strong>
+        <small>${pid === currentEvent?.creatorUid ? "Creador" : "Participante"}</small>
+      </div>
+      <button class="btn small danger" type="button" ${pid === currentEvent?.creatorUid ? "disabled" : ""}>Eliminar</button>
+    `;
+    item.querySelector("button")?.addEventListener("click", () => removeParticipantFromEvent(pid, participant));
+    box.appendChild(item);
   });
 }
 
@@ -601,24 +687,27 @@ function renderAdmin() {
     return;
   }
 
-  if (document.activeElement !== $("adminName")) $("adminName").value = currentEvent.name || "";
-  $("adminTheme").value = currentEvent.theme || "dark";
-  $("adminMax").value = String(Number(currentEvent.maxParticipants ?? 67));
-  $("btnToggleStatus").textContent = currentEvent.status === "closed" ? "Reabrir evento" : "Cerrar evento";
+  if (document.activeElement !== $("adminName")) $("adminName").value = currentEvent?.name || "";
+  $("adminTheme").value = currentEvent?.theme || "dark";
+  $("adminMax").value = String(Number(currentEvent?.maxParticipants ?? 67));
+  $("btnToggleStatus").textContent = currentEvent?.status === "closed" ? "Reabrir evento" : "Cerrar evento";
   renderQr(currentCode);
+  renderAdminParticipants();
 }
 
 async function saveAdmin() {
   if (!isAdmin || !currentCode) return;
   const updates = {
-    name: cleanName($("adminName").value) || currentEvent.name,
+    name: cleanName($("adminName").value).slice(0, 80) || currentEvent.name,
     theme: $("adminTheme").value,
-    maxParticipants: Number($("adminMax").value || 67)
+    maxParticipants: Number($("adminMax").value || 67),
+    updatedAt: Date.now()
   };
   try {
     await update(ref(db, `events/${currentCode}`), updates);
-    applyTheme(updates.theme);
+    applyTheme(updates.theme, true);
     $("adminMsg").textContent = "Cambios guardados.";
+    toast("Cambios del administrador guardados.");
   } catch (err) {
     console.error(err);
     $("adminMsg").textContent = "No se pudieron guardar los cambios.";
@@ -626,31 +715,82 @@ async function saveAdmin() {
 }
 
 async function toggleStatus() {
-  if (!isAdmin) return;
-  const next = currentEvent.status === "closed" ? "open" : "closed";
-  await update(ref(db, `events/${currentCode}`), { status: next });
+  if (!isAdmin || !currentCode) return;
+  const next = currentEvent?.status === "closed" ? "open" : "closed";
+  try {
+    await update(ref(db, `events/${currentCode}`), { status: next, updatedAt: Date.now() });
+    toast(next === "closed" ? "Evento cerrado." : "Evento reabierto.");
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo cambiar el estado del evento.");
+  }
 }
 
 async function resetVotes() {
-  if (!isAdmin) return;
+  if (!isAdmin || !currentCode) return;
   if (!confirm("¿Reiniciar votos y chats del evento?")) return;
-  await update(ref(db), {
-    [`events/${currentCode}/votesByRound`]: null,
-    [`chats/${currentCode}`]: null
-  });
+  try {
+    await update(ref(db), {
+      [`events/${currentCode}/votesByRound`]: null,
+      [`chats/${currentCode}`]: null,
+      [`matches/${currentCode}`]: null,
+      [`events/${currentCode}/updatedAt`]: Date.now()
+    });
+    toast("Votos, chats y matches reiniciados.");
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo reiniciar el evento.");
+  }
 }
 
 async function deleteEvent() {
-  if (!isAdmin) return;
+  if (!isAdmin || !currentCode) return;
   if (!confirm("¿Eliminar definitivamente el evento?")) return;
-  await update(ref(db), {
-    [`events/${currentCode}`]: null,
-    [`eventSecrets/${currentCode}`]: null,
-    [`adminSessions/${currentCode}`]: null,
-    [`chats/${currentCode}`]: null
+  try {
+    await update(ref(db), {
+      [`events/${currentCode}`]: null,
+      [`eventSecrets/${currentCode}`]: null,
+      [`adminSessions/${currentCode}`]: null,
+      [`chats/${currentCode}`]: null,
+      [`matches/${currentCode}`]: null
+    });
+    toast("Evento eliminado.");
+    stopListeners();
+    show("homeView");
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo eliminar el evento.");
+  }
+}
+
+async function removeParticipantFromEvent(participantUid, participantData = {}) {
+  if (!isAdmin || !currentCode || !participantUid) return;
+  if (!confirm(`¿Eliminar a ${participantData.name || "este participante"} del evento?`)) return;
+
+  const updates = {
+    [`events/${currentCode}/participants/${participantUid}`]: null,
+    [`events/${currentCode}/updatedAt`]: Date.now()
+  };
+
+  const normalized = participantData.normalizedName;
+  if (normalized) updates[`events/${currentCode}/nameIndex/${normalized}`] = null;
+
+  const rounds = currentEvent?.votesByRound || {};
+  Object.entries(rounds).forEach(([roundKey, votes]) => {
+    Object.entries(votes || {}).forEach(([voterUid, vote]) => {
+      if (voterUid === participantUid || vote?.targetUid === participantUid) {
+        updates[`events/${currentCode}/votesByRound/${roundKey}/${voterUid}`] = null;
+      }
+    });
   });
-  toast("Evento eliminado.");
-  show("homeView");
+
+  try {
+    await update(ref(db), updates);
+    toast("Participante eliminado.");
+  } catch (err) {
+    console.error(err);
+    toast("No se pudo eliminar el participante.");
+  }
 }
 
 function escapeHtml(text = "") {
@@ -658,10 +798,14 @@ function escapeHtml(text = "") {
 }
 
 function init() {
+  const savedTheme = localStorage.getItem(APP_THEME_KEY);
+  applyTheme(savedTheme || "dark");
+
   bind("btnGoCreate", "click", () => show("createView"));
   bind("btnGoJoin", "click", () => show("joinView"));
   document.querySelectorAll("[data-go]").forEach(btn => btn.addEventListener("click", () => {
     stopListeners();
+    if (btn.dataset.go === "homeView") applyTheme(localStorage.getItem(APP_THEME_KEY) || "dark");
     show(btn.dataset.go);
   }));
 
@@ -674,20 +818,22 @@ function init() {
   bind("btnSaveAdmin", "click", saveAdmin);
   bind("btnToggleStatus", "click", toggleStatus);
   bind("btnCopyInvite", "click", async () => {
-    if (currentCode) await navigator.clipboard.writeText(inviteUrl(currentCode));
+    if (!currentCode) return;
+    await navigator.clipboard.writeText(inviteUrl(currentCode));
     toast("Invitación copiada.");
   });
   bind("btnShowQr", "click", () => renderQr(currentCode, true));
   bind("btnResetVotes", "click", resetVotes);
   bind("btnDeleteEvent", "click", deleteEvent);
 
-  bind("eventTheme", "change", () => applyTheme($("eventTheme").value));
-  bind("adminTheme", "change", () => applyTheme($("adminTheme").value));
+  bind("eventTheme", "change", () => applyTheme($("eventTheme").value, true));
+  bind("adminTheme", "change", () => applyTheme($("adminTheme").value, true));
 
   const params = new URLSearchParams(location.search);
   const code = cleanCode(params.get("code") || "");
   if (code) {
     $("joinCode").value = code;
+    $("adminEventCode").value = code;
     show("joinView");
   }
 }

@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>sixseven</title>
   <meta name="description" content="sixseven · eventos privados de conexiones por rondas" />
-  <link rel="stylesheet" href="./style.css?v=clean1" />
+  <link rel="stylesheet" href="./style.css?v=final_audit1" />
   <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="icon" href="./assets/sixseven-logo.svg" type="image/svg+xml" />
-  <script src="./firebase-config.js?v=clean1"></script>
+  <link rel="icon" href="./assets/sixseven-mark.svg" type="image/svg+xml" />
+  <script src="./firebase-config.js?v=final_audit1"></script>
 </head>
 <body class="theme-dark">
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
@@ -16,12 +16,8 @@
   <main class="app">
     <section id="homeView" class="view active">
       <div class="card hero">
-        <div class="brand">
-          <img class="brandLogo" src="./assets/sixseven-logo.svg" alt="Logo sixseven" />
-          <div>
-            <h1>sixseven</h1>
-            <p>eventos privados · votos secretos · matches reales</p>
-          </div>
+        <div class="brand brandBoard">
+          <img id="heroWordmark" class="brandWordmark" src="./assets/sixseven-wordmark-dark.svg" alt="sixseven · Private events. Real connections." />
         </div>
 
         <p class="lead">Crea una sala privada, comparte el código y deja que cada ronda revele solo las coincidencias mutuas.</p>
@@ -34,7 +30,7 @@
         <div class="infoGrid">
           <article><img class="featureIcon" src="./assets/icon-rounds.svg" alt="" /><strong>6×7</strong><span>6 rondas de 7 minutos.</span></article>
           <article><img class="featureIcon" src="./assets/icon-privacy.svg" alt="" /><strong>Voto secreto</strong><span>Solo se muestra si hay match mutuo.</span></article>
-          <article><img class="featureIcon" src="./assets/icon-admin.svg" alt="" /><strong>Panel creador</strong><span>Control del evento y participantes.</span></article>
+          <article><img class="featureIcon" src="./assets/icon-admin.svg" alt="" /><strong>Panel creador</strong><span>Control del evento, QR y ajustes.</span></article>
         </div>
       </div>
     </section>
@@ -244,12 +240,17 @@
             <a id="qrLink" class="btn secondary full" target="_blank" rel="noopener">Abrir QR en nueva pestaña</a>
           </div>
 
+          <div class="adminParticipantsBox">
+            <h4>Participantes inscritos</h4>
+            <div id="adminParticipantsList" class="adminParticipantsList"></div>
+          </div>
+
           <p id="adminMsg" class="muted"></p>
         </aside>
       </div>
     </section>
   </main>
 
-  <script type="module" src="./app.js?v=clean1"></script>
+  <script type="module" src="./app.js?v=final_audit1"></script>
 </body>
 </html>

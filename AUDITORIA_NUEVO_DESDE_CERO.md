@@ -50,3 +50,8 @@ La pantalla del evento muestra contadores anónimos de personas que han votado e
 ## Logo e iconos premium
 
 Se incorporó un logo SVG propio en la página principal y una familia de iconos vectoriales para privacidad/voto secreto, turnos, match, chat, creador/admin, participante, voto e invitación QR. Los iconos están en la carpeta `assets/`.
+
+
+## Tamaños de iconos
+
+Se ajustaron los tamaños del logo y de los iconos para mejorar proporción, legibilidad y equilibrio visual en móvil y escritorio.

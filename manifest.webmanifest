@@ -3,6 +3,14 @@
   "short_name": "sixseven",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#090611",
-  "theme_color": "#d84b74"
+  "background_color": "#0b1220",
+  "theme_color": "#111a2b",
+  "icons": [
+    {
+      "src": "./assets/sixseven-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }
