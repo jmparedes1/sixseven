@@ -281,3 +281,107 @@ body.theme-white .qrImage { box-shadow: 0 10px 35px rgba(55,38,63,.12); }
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ICONOS_PREMIUM_APLICADOS */
+.brandLogo {
+  width: 86px;
+  height: 86px;
+  flex: 0 0 auto;
+  border-radius: 26px;
+  padding: 6px;
+  background: radial-gradient(circle at 35% 25%, rgba(255, 230, 184, .16), transparent 56%);
+  filter: drop-shadow(0 16px 30px color-mix(in srgb, var(--primary) 30%, transparent));
+}
+
+.featureIcon {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  display: block;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.22));
+}
+
+.titleIcon {
+  width: 44px;
+  height: 44px;
+  vertical-align: middle;
+  margin-right: 12px;
+  transform: translateY(-3px);
+  filter: drop-shadow(0 10px 16px rgba(0,0,0,.18));
+}
+
+.smallIcon {
+  width: 28px;
+  height: 28px;
+  vertical-align: middle;
+  margin-right: 8px;
+  transform: translateY(-2px);
+}
+
+.btnIcon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 8px;
+  transform: translateY(-1px);
+}
+
+.personIcon {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  margin-right: 8px;
+  transform: translateY(-2px);
+}
+
+.qrTitleIcon {
+  display: block;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 10px;
+}
+
+.infoGrid article {
+  position: relative;
+  overflow: hidden;
+}
+
+.infoGrid article::after {
+  content: "";
+  position: absolute;
+  inset: auto 14px 10px auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--gold) 14%, transparent), transparent 68%);
+  pointer-events: none;
+}
+
+.person strong {
+  display: flex;
+  align-items: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.btn.full {
+  display: flex;
+}
+
+@media (max-width: 640px) {
+  .brandLogo {
+    width: 70px;
+    height: 70px;
+  }
+  .titleIcon {
+    width: 36px;
+    height: 36px;
+  }
+}

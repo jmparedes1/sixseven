@@ -7,6 +7,7 @@
   <meta name="description" content="sixseven · eventos privados de conexiones por rondas" />
   <link rel="stylesheet" href="./style.css?v=clean1" />
   <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/sixseven-logo.svg" type="image/svg+xml" />
   <script src="./firebase-config.js?v=clean1"></script>
 </head>
 <body class="theme-dark">
@@ -16,7 +17,7 @@
     <section id="homeView" class="view active">
       <div class="card hero">
         <div class="brand">
-          <div class="logo">67</div>
+          <img class="brandLogo" src="./assets/sixseven-logo.svg" alt="Logo sixseven" />
           <div>
             <h1>sixseven</h1>
             <p>eventos privados · votos secretos · matches reales</p>
@@ -31,9 +32,9 @@
         </div>
 
         <div class="infoGrid">
-          <article><strong>6×7</strong><span>6 rondas de 7 minutos.</span></article>
-          <article><strong>Voto secreto</strong><span>Solo se muestra si hay match mutuo.</span></article>
-          <article><strong>Panel creador</strong><span>Control del evento y participantes.</span></article>
+          <article><img class="featureIcon" src="./assets/icon-rounds.svg" alt="" /><strong>6×7</strong><span>6 rondas de 7 minutos.</span></article>
+          <article><img class="featureIcon" src="./assets/icon-privacy.svg" alt="" /><strong>Voto secreto</strong><span>Solo se muestra si hay match mutuo.</span></article>
+          <article><img class="featureIcon" src="./assets/icon-admin.svg" alt="" /><strong>Panel creador</strong><span>Control del evento y participantes.</span></article>
         </div>
       </div>
     </section>
@@ -41,7 +42,7 @@
     <section id="createView" class="view">
       <div class="card panel">
         <button class="link" type="button" data-go="homeView">← Volver</button>
-        <h2>Crear evento</h2>
+        <h2><img class="titleIcon" src="./assets/icon-admin.svg" alt="" />Crear evento</h2>
         <p class="muted">Introduce el código general y configura la sala.</p>
 
         <label>Código de acceso general
@@ -103,7 +104,7 @@
     <section id="joinView" class="view">
       <div class="card panel">
         <button class="link" type="button" data-go="homeView">← Volver</button>
-        <h2>Entrar en un evento</h2>
+        <h2><img class="titleIcon" src="./assets/icon-user.svg" alt="" />Entrar en un evento</h2>
 
         <label>Código del evento
           <input id="joinCode" type="text" maxlength="12" autocomplete="one-time-code" placeholder="Ej.: A7K9Q2M8XR" />
@@ -123,7 +124,7 @@
 
         <hr />
 
-        <h3>Acceso de creador</h3>
+        <h3><img class="smallIcon" src="./assets/icon-admin.svg" alt="" />Acceso de creador</h3>
         <p class="muted">Para volver al panel de administración.</p>
 
         <label>Código de acceso general
@@ -184,13 +185,13 @@
         </header>
 
         <section class="card voteBox">
-          <h3>Participantes</h3>
+          <h3><img class="smallIcon" src="./assets/icon-user.svg" alt="" />Participantes</h3>
           <p id="voteHelp" class="muted">Elige una persona. Tu voto será secreto.</p>
           <div id="participantsList" class="people"></div>
         </section>
 
         <section id="matchBox" class="card matchBox hidden">
-          <h3>Match privado</h3>
+          <h3><img class="smallIcon" src="./assets/icon-match.svg" alt="" />Match privado</h3>
           <p id="matchText"></p>
           <div id="chatMessages" class="chatMessages"></div>
           <div class="chatForm">
@@ -200,7 +201,7 @@
         </section>
 
         <aside id="adminPanel" class="card admin hidden">
-          <h3>Panel administrador</h3>
+          <h3><img class="smallIcon" src="./assets/icon-admin.svg" alt="" />Panel administrador</h3>
           <p class="muted">Control del evento.</p>
 
           <label>Nombre del evento
@@ -237,6 +238,7 @@
           </div>
 
           <div id="qrBox" class="qrBox hidden">
+            <img class="smallIcon qrTitleIcon" src="./assets/icon-qr.svg" alt="" />
             <img id="qrImage" class="qrImage" alt="Código QR del evento" />
             <p class="muted">Escanea este QR para entrar directamente al evento.</p>
             <a id="qrLink" class="btn secondary full" target="_blank" rel="noopener">Abrir QR en nueva pestaña</a>

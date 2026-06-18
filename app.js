@@ -344,15 +344,15 @@ async function createEvent() {
 
     $("createdBox").classList.remove("hidden");
     $("createdBox").innerHTML = `
-      <h3>Evento creado</h3>
+      <h3><img class="smallIcon" src="./assets/icon-qr.svg" alt="" />Evento creado</h3>
       <p>Código: <strong>${code}</strong></p>
       <p>Guarda tu clave de creador.</p>
       <div class="qrCreateWrap">
         <img class="qrImage" src="${qrUrl(code)}" alt="Código QR del evento" />
         <p class="muted">Escanea el QR para abrir directamente la pantalla de entrada con el código cargado.</p>
       </div>
-      <button class="btn secondary full" id="copyNewInvite" type="button">Copiar invitación</button>
-      <a class="btn secondary full" id="openNewQr" href="${qrUrl(code)}" target="_blank" rel="noopener">Abrir código QR</a>
+      <button class="btn secondary full" id="copyNewInvite" type="button"><img class="btnIcon" src="./assets/icon-qr.svg" alt="" />Copiar invitación</button>
+      <a class="btn secondary full" id="openNewQr" href="${qrUrl(code)}" target="_blank" rel="noopener"><img class="btnIcon" src="./assets/icon-qr.svg" alt="" />Abrir código QR</a>
     `;
     $("copyNewInvite")?.addEventListener("click", async () => {{
       await navigator.clipboard.writeText(inviteUrl(code));
@@ -520,8 +520,8 @@ function renderParticipants(participants, votes, round) {
     const card = document.createElement("div");
     card.className = "person" + (pid === uid ? " me" : "");
     card.innerHTML = `
-      <strong>${escapeHtml(p.name || "Participante")}</strong>
-      <button class="btn small" type="button" ${pid === uid || !canVote || myVote ? "disabled" : ""}>Votar</button>
+      <strong><img class="personIcon" src="./assets/icon-user.svg" alt="" />${escapeHtml(p.name || "Participante")}</strong>
+      <button class="btn small" type="button" ${pid === uid || !canVote || myVote ? "disabled" : ""}><img class="btnIcon" src="./assets/icon-vote.svg" alt="" />Votar</button>
     `;
     card.querySelector("button")?.addEventListener("click", () => castVote(pid, p.name || "Participante"));
     list.appendChild(card);
