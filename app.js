@@ -140,7 +140,6 @@ function goToInitialView(viewId) {
     return;
   }
   if (viewId === "joinView") {
-    applyTheme(currentEvent?.theme || $("eventTheme")?.value || "dark");
     show("joinView");
     setTimeout(() => $("joinCode")?.focus(), 80);
     return;
@@ -167,15 +166,6 @@ function bindInitialNavigation() {
       goToInitialView("joinView");
     });
   }
-  document.querySelectorAll("[data-target-view]").forEach(button => {
-    if (button.dataset.boundGenericNavigation) return;
-    button.dataset.boundGenericNavigation = "1";
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      goToInitialView(button.dataset.targetView);
-    });
-  });
 }
 
 
@@ -2221,8 +2211,5 @@ try {
 // Los estilos visuales disponibles son:
 // dark, passion, white, night y gold.
 
-window.addEventListener("DOMContentLoaded", () => {
-  bindInitialNavigation();
-});
-
+window.addEventListener("DOMContentLoaded", bindInitialNavigation);
 setTimeout(bindInitialNavigation, 0);

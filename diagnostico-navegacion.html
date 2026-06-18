@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico navegación sixseven</title>
+<style>
+body{font-family:Arial,sans-serif;background:#12091b;color:#fff;padding:28px;line-height:1.5}.ok{color:#9dffbb}.bad{color:#ff9c9c}.card{background:#24172f;border:1px solid #665075;border-radius:18px;padding:16px;margin:12px 0}button{padding:12px 16px;border-radius:999px;border:1px solid #fff3;background:#fff1;color:white;font-weight:700}code{background:#0006;padding:2px 6px;border-radius:8px}
+</style>
+</head>
+<body>
+<h1>Diagnóstico de navegación sixseven</h1>
+<div id="out"></div>
+<div class="card">
+<p>Prueba manual:</p>
+<p><a href="index.html?v=navfix-20260618-2" style="color:#9df3ff">Abrir index con caché renovada</a></p>
+</div>
+<script>
+const out=document.getElementById('out');
+function line(name,ok,extra=''){const div=document.createElement('div');div.className='card';div.innerHTML=`<strong>${name}</strong>: <span class="${ok?'ok':'bad'}">${ok?'OK':'FALLO'}</span> ${extra}`;out.appendChild(div)}
+async function exists(path){try{const r=await fetch(path+'?t='+Date.now(),{cache:'no-store'});return r.ok}catch(e){return false}}
+(async()=>{
+line('index.html cargado', true);
+line('app.js existe', await exists('app.js'));
+line('firebase-config.js existe', await exists('firebase-config.js'));
+line('style.css existe', await exists('style.css'));
+line('assets/sixseven-logo.png existe', await exists('assets/sixseven-logo.png'));
+line('Botón Crear evento en esta página', false, 'Esta página es diagnóstico; comprueba el index enlazado arriba.');
+})();
+</script>
+</body>
+</html>

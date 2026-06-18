@@ -9,7 +9,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/png" href="assets/sixseven-logo.png" />
   <link rel="apple-touch-icon" href="assets/sixseven-logo.png" />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css?v=navfix-20260618-2" />
 </head>
 <body>
 
@@ -38,8 +38,8 @@
         <p class="lead">Crea una sala, comparte un código y deja que las coincidencias hablen por sí solas.</p>
 
         <div class="actions main-actions">
-          <button id="showCreate" data-target-view="createView" type="button" class="btn primary xl">Crear evento</button>
-          <button id="showJoin" data-target-view="joinView" type="button" class="btn secondary xl">Entrar con código</button>
+          <button id="showCreate" data-target-view="createView" onclick="window.sixsevenOpenCreate && window.sixsevenOpenCreate(event)" type="button" class="btn primary xl">Crear evento</button>
+          <button id="showJoin" data-target-view="joinView" onclick="window.sixsevenOpenJoin && window.sixsevenOpenJoin(event)" type="button" class="btn secondary xl">Entrar con código</button>
         </div>
 
         <section class="featureGrid" aria-label="Características principales">
@@ -511,19 +511,86 @@
     <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
   </audio>
 
+
+  <script id="sixseven-emergency-navigation">
+    (function () {
+      var views = ["home", "createView", "joinView", "eventView"];
+      var themes = ["dark", "passion", "white", "night", "gold"];
+      function byId(id) { return document.getElementById(id); }
+      function hideSplash() {
+        var splash = byId("splashScreen");
+        if (!splash) return;
+        splash.classList.add("is-hidden");
+        splash.style.pointerEvents = "none";
+        setTimeout(function () { if (splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 500);
+      }
+      function applyEmergencyTheme(theme) {
+        var selected = themes.indexOf(theme) >= 0 ? theme : "dark";
+        themes.forEach(function (t) { document.body.classList.remove("theme-" + t); });
+        document.body.classList.add("theme-" + selected);
+        document.documentElement.setAttribute("data-theme", selected);
+      }
+      function showView(viewId) {
+        views.forEach(function (id) {
+          var el = byId(id);
+          if (!el) return;
+          var active = id === viewId;
+          el.classList.toggle("active", active);
+          el.style.display = active ? "grid" : "none";
+        });
+        hideSplash();
+        try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) {}
+      }
+      window.sixsevenOpenCreate = function (event) {
+        if (event) { event.preventDefault(); event.stopPropagation(); }
+        var select = byId("eventTheme");
+        applyEmergencyTheme(select ? select.value : "dark");
+        showView("createView");
+        setTimeout(function () { var input = byId("globalAdminCodeCreate"); if (input) input.focus(); }, 80);
+        return false;
+      };
+      window.sixsevenOpenJoin = function (event) {
+        if (event) { event.preventDefault(); event.stopPropagation(); }
+        showView("joinView");
+        setTimeout(function () { var input = byId("joinCode"); if (input) input.focus(); }, 80);
+        return false;
+      };
+      function bindEmergencyNavigation() {
+        var create = byId("showCreate");
+        var join = byId("showJoin");
+        if (create && !create.dataset.emergencyBound) {
+          create.dataset.emergencyBound = "1";
+          create.addEventListener("click", window.sixsevenOpenCreate, true);
+        }
+        if (join && !join.dataset.emergencyBound) {
+          join.dataset.emergencyBound = "1";
+          join.addEventListener("click", window.sixsevenOpenJoin, true);
+        }
+        document.querySelectorAll("[data-target-view]").forEach(function (button) {
+          if (button.dataset.emergencyGenericBound) return;
+          button.dataset.emergencyGenericBound = "1";
+          button.addEventListener("click", function (event) {
+            var target = button.dataset.targetView;
+            if (target === "createView") return window.sixsevenOpenCreate(event);
+            if (target === "joinView") return window.sixsevenOpenJoin(event);
+            showView(target || "home");
+          }, true);
+        });
+      }
+      document.addEventListener("DOMContentLoaded", function () {
+        bindEmergencyNavigation();
+        setTimeout(hideSplash, 950);
+      });
+      window.addEventListener("load", function () { setTimeout(hideSplash, 300); });
+      window.addEventListener("pageshow", bindEmergencyNavigation);
+      setTimeout(bindEmergencyNavigation, 0);
+      setTimeout(hideSplash, 1800);
+    })();
+  </script>
+
   <script src="./firebase-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=navfix-20260618-2"></script>
 
-  <script>
-    window.addEventListener("load", () => {
-      const splash = document.getElementById("splashScreen");
-      if (!splash) return;
-      setTimeout(() => {
-        splash.classList.add("is-hidden");
-        setTimeout(() => splash.remove(), 700);
-      }, 950);
-    });
-  </script>
 </body>
 </html>

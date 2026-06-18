@@ -2134,6 +2134,19 @@ body.theme-gold .accessGateBox {
   content: "⚠ ";
 }
 
-/* BOTONES_INICIO_CORREGIDOS */
-.main-actions,#showCreate,#showJoin{position:relative;z-index:20;pointer-events:auto;touch-action:manipulation}
-.ambient{pointer-events:none}
+
+/* REVISION_TOTAL_BOTONES_ACCESO */
+.main-actions,
+#showCreate,
+#showJoin {
+  position: relative;
+  z-index: 50;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.ambient { pointer-events: none; }
+
+.splashScreen.is-hidden {
+  pointer-events: none !important;
+}
