@@ -110,8 +110,8 @@ function randomCode() {
 
 function getWordmarkSrc(theme = "gold") {
   return ["dark", "night", "passion"].includes(theme)
-    ? "./assets/sixseven-wordmark-light.svg"
-    : "./assets/sixseven-wordmark-dark.svg";
+    ? "./assets/logo-principal-oscuro.png"
+    : "./assets/wordmark-sixseven.png";
 }
 
 function applyTheme(theme = "gold", persist = false) {
@@ -376,15 +376,15 @@ async function createEvent() {
     const createdBox = $("createdBox");
     createdBox.classList.remove("hidden");
     createdBox.innerHTML = `
-      <h3><img class="smallIcon" src="./assets/icon-qr.svg" alt="" />Evento creado</h3>
+      <h3><img class="smallIcon" src="./assets/icon-qr.png" alt="" />Evento creado</h3>
       <p>Código: <strong>${code}</strong></p>
       <p>Guarda tu clave de creador y comparte la invitación o el QR.</p>
       <div class="qrCreateWrap">
         <img class="qrImage" src="${qrUrl(code)}" alt="Código QR del evento" />
         <p class="muted">Escanea el QR para abrir directamente la pantalla de entrada con el código cargado.</p>
       </div>
-      <button class="btn secondary full" id="copyNewInvite" type="button"><img class="btnIcon" src="./assets/icon-qr.svg" alt="" />Copiar invitación</button>
-      <a class="btn secondary full" id="openNewQr" href="${qrUrl(code)}" target="_blank" rel="noopener"><img class="btnIcon" src="./assets/icon-qr.svg" alt="" />Abrir código QR</a>
+      <button class="btn secondary full" id="copyNewInvite" type="button"><img class="btnIcon" src="./assets/icon-qr.png" alt="" />Copiar invitación</button>
+      <a class="btn secondary full" id="openNewQr" href="${qrUrl(code)}" target="_blank" rel="noopener"><img class="btnIcon" src="./assets/icon-qr.png" alt="" />Abrir código QR</a>
     `;
     $("copyNewInvite")?.addEventListener("click", async () => {
       await navigator.clipboard.writeText(inviteUrl(code));
@@ -571,8 +571,8 @@ function renderParticipants(participants, votes) {
       card.className = "person" + (pid === uid ? " me" : "");
       const disabled = pid === uid || !canVote || Boolean(myVote);
       card.innerHTML = `
-        <strong><img class="personIcon" src="./assets/icon-user.svg" alt="" />${escapeHtml(p.name || "Participante")}</strong>
-        <button class="btn small" type="button" ${disabled ? "disabled" : ""}><img class="btnIcon" src="./assets/icon-vote.svg" alt="" />Votar</button>
+        <strong><img class="personIcon" src="./assets/icon-user.png" alt="" />${escapeHtml(p.name || "Participante")}</strong>
+        <button class="btn small" type="button" ${disabled ? "disabled" : ""}><img class="btnIcon" src="./assets/icon-vote.png" alt="" />Votar</button>
       `;
       card.querySelector("button")?.addEventListener("click", () => castVote(pid, p.name || "Participante"));
       list.appendChild(card);

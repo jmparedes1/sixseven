@@ -28,3 +28,8 @@ Consulta:
 - `INSTRUCCIONES_GITHUB_PAGES.md`
 - `INSTRUCCIONES_FIREBASE_HOSTING.md`
 - `CHECKLIST_PUBLICACION.md`
+
+
+## Versión final con iconos PNG
+
+Esta versión usa exclusivamente PNG para el logo de la app, logos corporativos e iconos funcionales enlazados desde `assets/`.

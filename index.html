@@ -9,9 +9,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="sixseven" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="stylesheet" href="./style.css?v=splash-final-1" />
+  <link rel="stylesheet" href="./style.css?v=png-final-1" />
   <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="icon" href="./assets/sixseven-mark.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./assets/icon-app-180.png" />
+  <link rel="icon" href="./assets/monograma-sixseven.png" type="image/png" />
   <script src="./firebase-config.js"></script>
 </head>
 <body class="theme-gold">
@@ -19,8 +20,8 @@
 
   <section id="splashView" class="splashView" aria-label="Pantalla inicial sixseven">
     <div class="splashInner">
-      <img class="splashIcon" src="./assets/icon-app.svg" alt="sixseven" />
-      <img class="splashWordmark" src="./assets/sixseven-wordmark-dark.svg" alt="sixseven" />
+      <img class="splashIcon" src="./assets/icon-app.png" alt="sixseven" />
+      <img class="splashWordmark" src="./assets/wordmark-sixseven.png" alt="sixseven" />
       <p>PRIVATE EVENTS. REAL CONNECTIONS.</p>
     </div>
   </section>
@@ -29,8 +30,8 @@
     <section id="homeView" class="view active">
       <div class="accessLanding">
         <div class="accessBrand">
-          <img class="accessAppIcon" src="./assets/icon-app.svg" alt="sixseven" />
-          <img class="accessWordmark" src="./assets/sixseven-wordmark-dark.svg" alt="sixseven" />
+          <img class="accessAppIcon" src="./assets/icon-app.png" alt="sixseven" />
+          <img class="accessWordmark" src="./assets/wordmark-sixseven.png" alt="sixseven" />
           <p>PRIVATE EVENTS. REAL CONNECTIONS.</p>
         </div>
 
@@ -41,13 +42,13 @@
 
           <div class="accessButtons">
             <button id="btnGoCreate" class="accessButton dark" type="button">
-              <img src="./assets/icon-create.svg" alt="" />
+              <img src="./assets/icon-create.png" alt="" />
               <span>Crear evento</span>
               <b>›</b>
             </button>
 
             <button id="btnGoJoin" class="accessButton light" type="button">
-              <img src="./assets/icon-enter.svg" alt="" />
+              <img src="./assets/icon-enter.png" alt="" />
               <span>Entrar con código</span>
               <b>›</b>
             </button>
@@ -75,7 +76,7 @@
       <div class="card panel formPanel">
         <button class="link" type="button" data-go="homeView">← Volver</button>
         <div class="sectionHead compact">
-          <h2><img class="titleIcon" src="./assets/icon-admin.svg" alt="" />Crear evento</h2>
+          <h2><img class="titleIcon" src="./assets/icon-admin.png" alt="" />Crear evento</h2>
           <p>Acceso de organizador y configuración inicial de la sala.</p>
         </div>
 
@@ -128,7 +129,7 @@
           <input id="creatorKeyRepeat" type="password" maxlength="32" autocomplete="off" placeholder="Repite la clave" />
         </label>
 
-        <button id="btnCreateEvent" class="btn primary full" type="button"><img class="btnIcon" src="./assets/icon-create.svg" alt="" />Crear evento y generar código</button>
+        <button id="btnCreateEvent" class="btn primary full" type="button"><img class="btnIcon" src="./assets/icon-create.png" alt="" />Crear evento y generar código</button>
         <p id="createError" class="error"></p>
         <div id="createdBox" class="resultBox hidden"></div>
       </div>
@@ -139,7 +140,7 @@
         <div class="card panel formPanel">
           <button class="link" type="button" data-go="homeView">← Volver</button>
           <div class="sectionHead compact">
-            <h2><img class="titleIcon" src="./assets/icon-user.svg" alt="" />Entrar en un evento</h2>
+            <h2><img class="titleIcon" src="./assets/icon-user.png" alt="" />Entrar en un evento</h2>
             <p>Acceso para participantes con alias visible y código del evento.</p>
           </div>
 
@@ -156,13 +157,13 @@
             <span>Acepto participar de forma voluntaria en un evento privado para personas adultas.</span>
           </label>
 
-          <button id="btnJoinEvent" class="btn primary full" type="button"><img class="btnIcon" src="./assets/icon-enter.svg" alt="" />Entrar al evento</button>
+          <button id="btnJoinEvent" class="btn primary full" type="button"><img class="btnIcon" src="./assets/icon-enter.png" alt="" />Entrar al evento</button>
           <p id="joinError" class="error"></p>
         </div>
 
         <div class="card panel formPanel altPanel">
           <div class="sectionHead compact">
-            <h2><img class="titleIcon" src="./assets/icon-admin.svg" alt="" />Acceso de creador</h2>
+            <h2><img class="titleIcon" src="./assets/icon-admin.png" alt="" />Acceso de creador</h2>
             <p>Recupera el panel del organizador para gestionar el evento.</p>
           </div>
 
@@ -178,7 +179,7 @@
             <input id="adminCreatorKey" type="password" maxlength="32" autocomplete="off" placeholder="Clave de creador" />
           </label>
 
-          <button id="btnAdminAccess" class="btn secondary full" type="button"><img class="btnIcon" src="./assets/icon-admin.svg" alt="" />Entrar como administrador</button>
+          <button id="btnAdminAccess" class="btn secondary full" type="button"><img class="btnIcon" src="./assets/icon-admin.png" alt="" />Entrar como administrador</button>
           <p id="adminAccessError" class="error"></p>
         </div>
       </div>
@@ -191,7 +192,7 @@
             <button class="link" type="button" data-go="homeView">← Salir</button>
             <p class="codeLine">Código: <strong id="currentCode"></strong></p>
           </div>
-          <img class="miniBrand" src="./assets/sixseven-logo.svg" alt="sixseven" />
+          <img class="miniBrand" src="./assets/logo-principal-claro.png" alt="sixseven" />
           <h2 id="currentTitle">Evento</h2>
           <p id="currentReason" class="muted"></p>
           <div class="pillRow">
@@ -202,7 +203,7 @@
 
           <div id="turnCountdownBox" class="turnCountdownBox">
             <div class="countdownHeader">
-              <img src="./assets/icon-rounds.svg" alt="" />
+              <img src="./assets/icon-rounds.png" alt="" />
               <div>
                 <span id="turnLabel" class="turnLabel">Turno 1 de 6</span>
                 <strong id="turnCountdown" class="turnCountdown">07:00</strong>
@@ -213,15 +214,15 @@
           </div>
 
           <div class="anonymousCounters" aria-label="Contadores anónimos del evento">
-            <article><img src="./assets/icon-user.svg" alt="" /><span id="anonymousVoters">0</span><small>Han votado</small></article>
-            <article><img src="./assets/icon-stats.svg" alt="" /><span id="anonymousReceivedVotes">0</span><small>Votos emitidos</small></article>
-            <article><img src="./assets/icon-match.svg" alt="" /><span id="anonymousMatches">0</span><small>Matches</small></article>
+            <article><img src="./assets/icon-user.png" alt="" /><span id="anonymousVoters">0</span><small>Han votado</small></article>
+            <article><img src="./assets/icon-stats.png" alt="" /><span id="anonymousReceivedVotes">0</span><small>Votos emitidos</small></article>
+            <article><img src="./assets/icon-match.png" alt="" /><span id="anonymousMatches">0</span><small>Matches</small></article>
           </div>
         </header>
 
         <section class="card voteBox">
           <div class="sectionHead compact">
-            <h3><img class="smallIcon" src="./assets/icon-user.svg" alt="" />Participantes</h3>
+            <h3><img class="smallIcon" src="./assets/icon-user.png" alt="" />Participantes</h3>
             <p id="voteHelp">Elige una persona. Tu voto será secreto.</p>
           </div>
           <div id="participantsList" class="people"></div>
@@ -229,19 +230,19 @@
 
         <section id="matchBox" class="card matchBox hidden">
           <div class="sectionHead compact">
-            <h3><img class="smallIcon" src="./assets/icon-match.svg" alt="" />Match privado</h3>
+            <h3><img class="smallIcon" src="./assets/icon-match.png" alt="" />Match privado</h3>
             <p id="matchText"></p>
           </div>
           <div id="chatMessages" class="chatMessages"></div>
           <div class="chatForm">
             <input id="chatInput" type="text" maxlength="240" placeholder="Escribe un mensaje..." />
-            <button id="btnSendChat" class="btn small" type="button"><img class="btnIcon" src="./assets/icon-chat.svg" alt="" />Enviar</button>
+            <button id="btnSendChat" class="btn small" type="button"><img class="btnIcon" src="./assets/icon-chat.png" alt="" />Enviar</button>
           </div>
         </section>
 
         <aside id="adminPanel" class="card admin hidden">
           <div class="sectionHead compact">
-            <h3><img class="smallIcon" src="./assets/icon-admin.svg" alt="" />Panel administrador</h3>
+            <h3><img class="smallIcon" src="./assets/icon-admin.png" alt="" />Panel administrador</h3>
             <p>Control premium del evento.</p>
           </div>
 
@@ -270,24 +271,24 @@
           </label>
 
           <div class="adminActions">
-            <button id="btnSaveAdmin" class="btn primary full" type="button"><img class="btnIcon" src="./assets/icon-admin.svg" alt="" />Guardar cambios</button>
-            <button id="btnToggleStatus" class="btn secondary full" type="button"><img class="btnIcon" src="./assets/icon-privacy.svg" alt="" />Cerrar evento</button>
-            <button id="btnCopyInvite" class="btn secondary full" type="button"><img class="btnIcon" src="./assets/icon-share.svg" alt="" />Copiar invitación</button>
-            <button id="btnShowQr" class="btn secondary full" type="button"><img class="btnIcon" src="./assets/icon-qr.svg" alt="" />Ver código QR</button>
-            <button id="btnResetVotes" class="btn danger full" type="button"><img class="btnIcon" src="./assets/icon-rounds.svg" alt="" />Reiniciar votos</button>
-            <button id="btnDeleteEvent" class="btn danger full" type="button"><img class="btnIcon" src="./assets/icon-match.svg" alt="" />Eliminar evento</button>
+            <button id="btnSaveAdmin" class="btn primary full" type="button"><img class="btnIcon" src="./assets/icon-admin.png" alt="" />Guardar cambios</button>
+            <button id="btnToggleStatus" class="btn secondary full" type="button"><img class="btnIcon" src="./assets/icon-privacy.png" alt="" />Cerrar evento</button>
+            <button id="btnCopyInvite" class="btn secondary full" type="button"><img class="btnIcon" src="./assets/icon-share.png" alt="" />Copiar invitación</button>
+            <button id="btnShowQr" class="btn secondary full" type="button"><img class="btnIcon" src="./assets/icon-qr.png" alt="" />Ver código QR</button>
+            <button id="btnResetVotes" class="btn danger full" type="button"><img class="btnIcon" src="./assets/icon-rounds.png" alt="" />Reiniciar votos</button>
+            <button id="btnDeleteEvent" class="btn danger full" type="button"><img class="btnIcon" src="./assets/icon-match.png" alt="" />Eliminar evento</button>
           </div>
 
           <div id="qrBox" class="qrBox hidden">
-            <img class="smallIcon qrTitleIcon" src="./assets/icon-qr.svg" alt="" />
+            <img class="smallIcon qrTitleIcon" src="./assets/icon-qr.png" alt="" />
             <img id="qrImage" class="qrImage" alt="Código QR del evento" />
             <p class="muted">Escanea este QR para entrar directamente al evento.</p>
-            <a id="qrLink" class="btn secondary full" target="_blank" rel="noopener"><img class="btnIcon" src="./assets/icon-qr.svg" alt="" />Abrir QR en nueva pestaña</a>
+            <a id="qrLink" class="btn secondary full" target="_blank" rel="noopener"><img class="btnIcon" src="./assets/icon-qr.png" alt="" />Abrir QR en nueva pestaña</a>
           </div>
 
           <div class="adminParticipants cardInset">
             <div class="sectionHead compact">
-              <h4><img class="smallIcon" src="./assets/icon-badge.svg" alt="" />Participantes inscritos</h4>
+              <h4><img class="smallIcon" src="./assets/icon-badge.png" alt="" />Participantes inscritos</h4>
               <p>Listado rápido y opción de eliminación.</p>
             </div>
             <div id="adminParticipantsList" class="adminParticipantsList"></div>
@@ -299,6 +300,6 @@
     </section>
   </main>
 
-  <script type="module" src="./app.js?v=splash-final-1"></script>
+  <script type="module" src="./app.js?v=png-final-1"></script>
 </body>
 </html>
