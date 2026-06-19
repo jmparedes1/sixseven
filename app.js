@@ -3,7 +3,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getDatabase, ref, set, get, onValue, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const ACCESS_HASH = "8e76c0308d7336c906bd5d6c460afca6e90e3e0cdbf7445c86e4c9054053456d";
-const VALID_THEMES = ["dark", "passion", "white", "night", "gold"];
+const VALID_THEMES = ["gold", "dark", "passion", "white", "night"];
 const ROUND_MS = 7 * 60 * 1000;
 const TOTAL_ROUNDS = 6;
 const APP_THEME_KEY = "sixseven_preview_theme";
@@ -39,6 +39,28 @@ function toast(message) {
   t.classList.remove("hidden");
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.add("hidden"), 3200);
+}
+
+
+function hideSplash() {
+  const splash = $("splashView");
+  if (!splash) return;
+  splash.classList.add("leaving");
+  setTimeout(() => splash.classList.add("hidden"), 520);
+}
+
+function goJoinWithCodeFromHome() {
+  const homeCode = cleanCode($("homeEventCode")?.value || "");
+  const err = $("homeAccessError");
+  if (err) err.textContent = "";
+  if (!homeCode) {
+    if (err) err.textContent = "Introduce un código de evento.";
+    $("homeEventCode")?.focus();
+    return;
+  }
+  if ($("joinCode")) $("joinCode").value = homeCode;
+  show("joinView");
+  $("participantName")?.focus();
 }
 
 function show(viewId) {
@@ -801,8 +823,11 @@ function init() {
   const savedTheme = localStorage.getItem(APP_THEME_KEY);
   applyTheme(savedTheme || "gold");
 
+  setTimeout(hideSplash, 1000);
   bind("btnGoCreate", "click", () => show("createView"));
   bind("btnGoJoin", "click", () => show("joinView"));
+  bind("btnHomeContinue", "click", goJoinWithCodeFromHome);
+  $("homeEventCode")?.addEventListener("keydown", e => { if (e.key === "Enter") goJoinWithCodeFromHome(); });
   document.querySelectorAll("[data-go]").forEach(btn => btn.addEventListener("click", () => {
     stopListeners();
     if (btn.dataset.go === "homeView") applyTheme(localStorage.getItem(APP_THEME_KEY) || "gold");

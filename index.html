@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="sixseven" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="stylesheet" href="./style.css?v=deploy1" />
+  <link rel="stylesheet" href="./style.css?v=splash-final-1" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./assets/sixseven-mark.svg" type="image/svg+xml" />
   <script src="./firebase-config.js"></script>
@@ -17,39 +17,57 @@
 <body class="theme-gold">
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+  <section id="splashView" class="splashView" aria-label="Pantalla inicial sixseven">
+    <div class="splashInner">
+      <img class="splashIcon" src="./assets/icon-app.svg" alt="sixseven" />
+      <img class="splashWordmark" src="./assets/sixseven-wordmark-dark.svg" alt="sixseven" />
+      <p>PRIVATE EVENTS. REAL CONNECTIONS.</p>
+    </div>
+  </section>
+
   <main class="shell">
     <section id="homeView" class="view active">
-      <div class="heroSurface">
-        <div class="heroBrand">
-          <img class="logoFull" src="./assets/sixseven-logo.svg" alt="Logo sixseven" />
-          <p class="heroIntro">La plataforma privada para eventos elegantes, conexiones reales y rondas secretas 6×7.</p>
+      <div class="accessLanding">
+        <div class="accessBrand">
+          <img class="accessAppIcon" src="./assets/icon-app.svg" alt="sixseven" />
+          <img class="accessWordmark" src="./assets/sixseven-wordmark-dark.svg" alt="sixseven" />
+          <p>PRIVATE EVENTS. REAL CONNECTIONS.</p>
         </div>
 
-        <div class="heroActions">
-          <button id="btnGoCreate" class="btn primary xl" type="button"><img class="btnIcon" src="./assets/icon-create.svg" alt="" />Crear evento</button>
-          <button id="btnGoJoin" class="btn secondary xl" type="button"><img class="btnIcon" src="./assets/icon-enter.svg" alt="" />Entrar con código</button>
-        </div>
+        <div class="accessCard">
+          <div class="ornament"><span></span><i></i><span></span></div>
+          <h1>Accede a tu evento</h1>
+          <div class="ornament small"><span></span><i></i><span></span></div>
 
-        <section class="iconShowcase card">
-          <div class="sectionHead">
-            <h2>Sistema de acceso y experiencia</h2>
-            <p>Todo el flujo visual y funcional de la app sigue la identidad premium de sixseven.</p>
+          <div class="accessButtons">
+            <button id="btnGoCreate" class="accessButton dark" type="button">
+              <img src="./assets/icon-create.svg" alt="" />
+              <span>Crear evento</span>
+              <b>›</b>
+            </button>
+
+            <button id="btnGoJoin" class="accessButton light" type="button">
+              <img src="./assets/icon-enter.svg" alt="" />
+              <span>Entrar con código</span>
+              <b>›</b>
+            </button>
           </div>
-          <div class="featureMatrix">
-            <article><img src="./assets/icon-create.svg" alt="" /><strong>Crear evento</strong><span>Generación de sala privada con código.</span></article>
-            <article><img src="./assets/icon-enter.svg" alt="" /><strong>Entrar con código</strong><span>Acceso rápido para participantes.</span></article>
-            <article><img src="./assets/icon-qr.svg" alt="" /><strong>Acceso QR</strong><span>Invitación directa al evento.</span></article>
-            <article><img src="./assets/icon-privacy.svg" alt="" /><strong>Voto privado</strong><span>Solo se revela el match mutuo.</span></article>
-            <article><img src="./assets/icon-rounds.svg" alt="" /><strong>Cuenta atrás 6×7</strong><span>6 turnos de 7 minutos.</span></article>
-            <article><img src="./assets/icon-stats.svg" alt="" /><strong>Estadísticas anónimas</strong><span>Participación, votos y matches.</span></article>
-            <article><img src="./assets/icon-vote.svg" alt="" /><strong>Votar</strong><span>Una elección por turno.</span></article>
-            <article><img src="./assets/icon-match.svg" alt="" /><strong>Match</strong><span>Detección automática de coincidencias.</span></article>
-            <article><img src="./assets/icon-chat.svg" alt="" /><strong>Chat privado</strong><span>Conversación tras un match.</span></article>
-            <article><img src="./assets/icon-admin.svg" alt="" /><strong>Panel creador</strong><span>Control total del evento.</span></article>
-            <article><img src="./assets/icon-user.svg" alt="" /><strong>Participantes</strong><span>Gestión de alias y acceso.</span></article>
-            <article><img src="./assets/icon-badge.svg" alt="" /><strong>Pegatinas</strong><span>Identificación imprimible.</span></article>
-          </div>
-        </section>
+
+          <div class="orLine"><span></span><em>O bien</em><span></span></div>
+
+          <label class="homeCodeLabel">Código del evento
+            <div class="homeCodeInputWrap">
+              <span aria-hidden="true">⌕</span>
+              <input id="homeEventCode" type="text" maxlength="12" autocomplete="one-time-code" placeholder="Ingresa el código aquí" />
+            </div>
+          </label>
+
+          <button id="btnHomeContinue" class="continueButton" type="button">
+            <span>Continuar</span>
+            <b>›</b>
+          </button>
+          <p id="homeAccessError" class="error"></p>
+        </div>
       </div>
     </section>
 
@@ -281,6 +299,6 @@
     </section>
   </main>
 
-  <script type="module" src="./app.js?v=deploy1"></script>
+  <script type="module" src="./app.js?v=splash-final-1"></script>
 </body>
 </html>

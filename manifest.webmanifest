@@ -8,7 +8,7 @@
   "theme_color": "#efe6d8",
   "icons": [
     {
-      "src": "./assets/sixseven-mark.svg",
+      "src": "./assets/icon-app.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

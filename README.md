@@ -1,30 +1,30 @@
-# sixseven · Deploy Ready
+# sixseven · versión final con splash y acceso
 
-Versión lista para publicar en **GitHub Pages** o **Firebase Hosting**.
+Versión lista para GitHub Pages y Firebase Hosting.
 
 ## Incluye
 
-- Interfaz premium estilo beige/dorado/navy.
-- Sistema de iconos en `assets/`.
-- Crear evento.
-- Entrar con código.
+- Pantalla splash inicial con logo corporativo.
+- Transición automática tras 1 segundo a pantalla de acceso.
+- Pantalla de acceso funcional con:
+  - Crear evento.
+  - Entrar con código.
+  - Campo directo de código y botón Continuar.
+- Logo sixseven aplicado en splash, acceso, evento, favicon y manifest.
 - QR de invitación.
 - Cuenta atrás 6×7.
-- Voto privado.
+- Voto secreto.
 - Match mutuo.
 - Chat privado.
 - Contadores anónimos.
-- Panel de administrador.
+- Panel de administración.
 - Gestión de participantes.
-- Configuración para GitHub Pages con `.nojekyll`.
-- Configuración para Firebase Hosting con `firebase.json`.
-- Reglas de Realtime Database en `firebase.rules.json`.
+- Configuración GitHub Pages / Firebase Hosting.
 
-## Instrucciones
+## Publicación
 
-Lee:
+Consulta:
 
 - `INSTRUCCIONES_GITHUB_PAGES.md`
 - `INSTRUCCIONES_FIREBASE_HOSTING.md`
 - `CHECKLIST_PUBLICACION.md`
-

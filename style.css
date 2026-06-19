@@ -468,3 +468,326 @@ hr { border: none; border-top: 1px solid var(--line); margin: 22px 0; }
   .person .btn, .adminParticipantItem .btn, .chatForm .btn { width: 100%; }
   .countdownHeader { align-items: flex-start; }
 }
+
+
+/* SPLASH + ACCESS SCREEN FINAL */
+.splashView {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255,255,255,.82), transparent 30%),
+    radial-gradient(circle at 88% 78%, rgba(214,180,132,.20), transparent 32%),
+    linear-gradient(135deg, #f7efe4, #efe4d5 55%, #fbf6ed);
+  overflow: hidden;
+  transition: opacity .46s ease, transform .46s ease;
+}
+.splashView::before,
+.accessLanding::before {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 58%;
+  left: -10%;
+  top: -12%;
+  border-bottom: 2px solid rgba(225, 190, 137, .44);
+  border-radius: 0 0 50% 50%;
+  transform: rotate(-13deg);
+  opacity: .72;
+  pointer-events: none;
+}
+.splashView::after,
+.accessLanding::after {
+  content: "";
+  position: absolute;
+  width: 115%;
+  height: 55%;
+  right: -18%;
+  bottom: -18%;
+  border-top: 2px solid rgba(225, 190, 137, .38);
+  border-radius: 50% 50% 0 0;
+  transform: rotate(-15deg);
+  opacity: .72;
+  pointer-events: none;
+}
+.splashView.leaving {
+  opacity: 0;
+  transform: scale(1.018);
+}
+.splashInner {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  animation: splashIn .62s ease both;
+}
+@keyframes splashIn {
+  from { opacity: 0; transform: translateY(16px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.splashIcon {
+  width: clamp(178px, 38vw, 260px);
+  height: auto;
+  filter: drop-shadow(0 22px 30px rgba(74, 57, 36, .22));
+}
+.splashWordmark {
+  width: min(520px, 72vw);
+  height: auto;
+}
+.splashInner p {
+  margin: -8px 0 0;
+  color: #b68a56;
+  font-size: clamp(.74rem, 2vw, .92rem);
+  letter-spacing: .32em;
+  font-weight: 700;
+}
+
+.accessLanding {
+  position: relative;
+  min-height: calc(100svh - 52px);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 28px;
+  padding: clamp(20px, 4vw, 42px);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 16% 20%, rgba(255,255,255,.72), transparent 34%),
+    radial-gradient(circle at 84% 80%, rgba(206,166,111,.18), transparent 35%),
+    linear-gradient(135deg, #f8f0e6, #efe5d7 56%, #fbf6ee);
+  overflow: hidden;
+  border: 1px solid rgba(184, 138, 87, .15);
+  box-shadow: var(--shadow);
+}
+
+.accessBrand {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 10px;
+}
+.accessAppIcon {
+  width: clamp(92px, 18vw, 138px);
+  height: auto;
+  filter: drop-shadow(0 18px 26px rgba(44, 35, 25, .19));
+}
+.accessWordmark {
+  width: min(430px, 78vw);
+  height: auto;
+}
+.accessBrand p {
+  margin: -12px 0 0;
+  color: #b68a56;
+  letter-spacing: .28em;
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.accessCard {
+  position: relative;
+  z-index: 2;
+  width: min(680px, 100%);
+  padding: clamp(26px, 5vw, 46px);
+  border-radius: 34px;
+  border: 1px solid rgba(203, 160, 100, .42);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.76), rgba(255,255,255,.42)),
+    rgba(255, 250, 242, .62);
+  box-shadow: 0 24px 52px rgba(82, 62, 36, .16);
+  backdrop-filter: blur(9px);
+}
+.ornament {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  width: min(180px, 48%);
+  margin: 0 auto 20px;
+  color: #c69a64;
+}
+.ornament.small { margin: 18px auto 26px; }
+.ornament span {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(198,154,100,.78), transparent);
+}
+.ornament i {
+  width: 10px;
+  height: 18px;
+  background: linear-gradient(180deg, #d8b484, #b98754);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  display: block;
+}
+.accessCard h1 {
+  text-align: center;
+  margin: 0;
+  color: #182133;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 3.15rem);
+  letter-spacing: -.02em;
+}
+.accessButtons {
+  display: grid;
+  gap: 16px;
+}
+.accessButton {
+  min-height: 72px;
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(190, 141, 88, .42);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding: 0 28px;
+  cursor: pointer;
+  text-align: left;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  font-size: clamp(1.1rem, 3vw, 1.55rem);
+  font-weight: 600;
+}
+.accessButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 26px rgba(65, 48, 29, .16);
+}
+.accessButton img {
+  width: 44px;
+  height: 44px;
+}
+.accessButton b,
+.continueButton b {
+  font-size: 2.25rem;
+  font-weight: 300;
+  line-height: 1;
+}
+.accessButton.dark {
+  color: #eacda2;
+  background: linear-gradient(135deg, #172439, #0c1525);
+  box-shadow: 0 15px 24px rgba(13, 21, 37, .25);
+}
+.accessButton.light {
+  color: #a77a48;
+  background: rgba(255,255,255,.55);
+}
+.orLine {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+  margin: 24px 0 18px;
+}
+.orLine span {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(198,154,100,.55));
+}
+.orLine span:last-child {
+  background: linear-gradient(90deg, rgba(198,154,100,.55), transparent);
+}
+.orLine em {
+  font-style: normal;
+  color: #b68a56;
+  font-size: 1.1rem;
+}
+.homeCodeLabel {
+  display: grid;
+  gap: 10px;
+  font-size: 1.04rem;
+  color: #1a2235;
+  margin-bottom: 18px;
+}
+.homeCodeInputWrap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  border-radius: 16px;
+  border: 1px solid rgba(190, 141, 88, .36);
+  background: rgba(255,255,255,.42);
+  padding: 0 18px;
+}
+.homeCodeInputWrap span {
+  color: #a78b6f;
+  font-size: 1.3rem;
+}
+.homeCodeInputWrap input {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  min-height: 60px;
+}
+.homeCodeInputWrap input:focus {
+  box-shadow: none;
+}
+.continueButton {
+  width: 100%;
+  min-height: 72px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #e8c293, #c8945d);
+  color: #182133;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 0 28px;
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 16px 28px rgba(181, 129, 73, .24);
+}
+
+html[data-theme="dark"] .accessLanding,
+body.theme-dark .accessLanding,
+html[data-theme="night"] .accessLanding,
+body.theme-night .accessLanding,
+html[data-theme="passion"] .accessLanding,
+body.theme-passion .accessLanding {
+  background:
+    radial-gradient(circle at 16% 20%, rgba(255,255,255,.07), transparent 34%),
+    radial-gradient(circle at 84% 80%, rgba(206,166,111,.12), transparent 35%),
+    linear-gradient(135deg, var(--bg-2), var(--bg));
+}
+html[data-theme="dark"] .accessCard,
+html[data-theme="night"] .accessCard,
+html[data-theme="passion"] .accessCard {
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04)), var(--paper);
+}
+html[data-theme="dark"] .accessCard h1,
+html[data-theme="night"] .accessCard h1,
+html[data-theme="passion"] .accessCard h1,
+html[data-theme="dark"] .homeCodeLabel,
+html[data-theme="night"] .homeCodeLabel,
+html[data-theme="passion"] .homeCodeLabel {
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .accessLanding {
+    min-height: calc(100svh - 32px);
+    gap: 18px;
+    padding: 18px;
+  }
+  .accessCard {
+    padding: 24px 18px;
+    border-radius: 28px;
+  }
+  .accessButton {
+    min-height: 64px;
+    padding: 0 18px;
+  }
+  .accessButton img {
+    width: 36px;
+    height: 36px;
+  }
+  .homeCodeInputWrap,
+  .continueButton {
+    min-height: 62px;
+  }
+}
