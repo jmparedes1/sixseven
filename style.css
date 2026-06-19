@@ -791,3 +791,30 @@ html[data-theme="passion"] .homeCodeLabel {
     min-height: 62px;
   }
 }
+
+
+/* FINAL TRANSPARENT PNG BRANDING */
+.logoFull,
+.miniBrand,
+.accessWordmark,
+.splashWordmark,
+.brandWordmark,
+.accessAppIcon,
+.splashIcon,
+.featureMatrix article img,
+.btnIcon,
+.titleIcon,
+.smallIcon,
+.personIcon,
+.anonymousCounters img,
+.countdownHeader img {
+  object-fit: contain;
+}
+
+.accessWordmark {
+  max-height: 130px;
+}
+
+.miniBrand {
+  max-height: 160px;
+}

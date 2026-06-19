@@ -33,3 +33,8 @@ Consulta:
 ## Versión final con iconos PNG
 
 Esta versión usa exclusivamente PNG para el logo de la app, logos corporativos e iconos funcionales enlazados desde `assets/`.
+
+
+## Versión final con PNG transparentes
+
+Usa PNG con fondo transparente para la imagen corporativa y mantiene los iconos funcionales enlazados desde `assets/`.
